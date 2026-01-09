@@ -1,0 +1,44 @@
+[
+  {
+    "id": 101,
+    "t": "Ma Quiche Lorraine",
+    "mood": "comfort",
+    "time": "45",
+    "cal": "550",
+    "em": "🥧",
+    "i": [
+      "Pâte brisée",
+      "200g Lardons",
+      "3 Oeufs",
+      "20cl Crème fraîche",
+      "Muscade"
+    ],
+    "s": [
+      "Étaler la pâte.",
+      "Cuire les lardons.",
+      "Mélanger oeufs et crème.",
+      "Tout verser et cuire 30min à 200°C."
+    ]
+  },
+  {
+    "id": 102,
+    "t": "Avocado Toast",
+    "mood": "healthy",
+    "time": "5",
+    "cal": "250",
+    "em": "🥑",
+    "i": [
+      "Pain complet",
+      "1 Avocat mûr",
+      "Citron vert",
+      "Piment d'Espelette",
+      "Oeuf poché (option)"
+    ],
+    "s": [
+      "Griller le pain.",
+      "Écraser l'avocat avec le citron.",
+      "Étaler sur le pain.",
+      "Assaisonner."
+    ]
+  }
+]
