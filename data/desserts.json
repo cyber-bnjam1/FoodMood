@@ -219,3 +219,796 @@
     ]
   }
 ]
+[
+  {
+    "id": 113,
+    "t": "Crème diplomate",
+    "mood": "dessert",
+    "time": "30",
+    "cal": "",
+    "em": "🍮",
+    "i": [
+      "500 ml de lait",
+      "4 jaunes d’œufs",
+      "100 g de sucre",
+      "40 g de maïzena",
+      "200 ml de crème liquide"
+    ],
+    "s": [
+      "Préparer une crème pâtissière.",
+      "Laisser refroidir.",
+      "Monter la crème liquide.",
+      "Incorporer délicatement la crème montée."
+    ]
+  },
+  {
+    "id": 114,
+    "t": "Praliné maison",
+    "mood": "dessert",
+    "time": "25",
+    "cal": "",
+    "em": "🌰",
+    "i": [
+      "150 g d’amandes",
+      "150 g de noisettes",
+      "150 g de sucre"
+    ],
+    "s": [
+      "Réaliser un caramel à sec.",
+      "Ajouter les fruits secs.",
+      "Laisser refroidir.",
+      "Mixer jusqu’à obtenir une pâte."
+    ]
+  },
+  {
+    "id": 115,
+    "t": "Insert chocolat",
+    "mood": "dessert",
+    "time": "20",
+    "cal": "",
+    "em": "🍫",
+    "i": [
+      "200 g de chocolat noir",
+      "200 ml de crème liquide",
+      "2 feuilles de gélatine"
+    ],
+    "s": [
+      "Hydrater la gélatine.",
+      "Chauffer la crème.",
+      "Verser sur le chocolat.",
+      "Ajouter la gélatine.",
+      "Couler et congeler."
+    ]
+  },
+  {
+    "id": 116,
+    "t": "Biscuit joconde",
+    "mood": "dessert",
+    "time": "35",
+    "cal": "",
+    "em": "🍰",
+    "i": [
+      "120 g de poudre d’amandes",
+      "120 g de sucre glace",
+      "40 g de farine",
+      "4 œufs",
+      "30 g de beurre fondu"
+    ],
+    "s": [
+      "Mélanger les poudres.",
+      "Ajouter les œufs.",
+      "Incorporer le beurre.",
+      "Cuire à 200°C pendant 8 min."
+    ]
+  },
+  {
+    "id": 117,
+    "t": "Mousse au chocolat",
+    "mood": "dessert",
+    "time": "20",
+    "cal": "",
+    "em": "🍫",
+    "i": [
+      "200 g de chocolat noir",
+      "6 œufs",
+      "1 pincée de sel"
+    ],
+    "s": [
+      "Faire fondre le chocolat.",
+      "Séparer les blancs des jaunes.",
+      "Incorporer les jaunes.",
+      "Monter les blancs et les incorporer."
+    ]
+  },
+  {
+    "id": 118,
+    "t": "Crème anglaise",
+    "mood": "classic",
+    "time": "15",
+    "cal": "",
+    "em": "🥛",
+    "i": [
+      "500 ml de lait",
+      "4 jaunes d’œufs",
+      "80 g de sucre",
+      "1 gousse de vanille"
+    ],
+    "s": [
+      "Chauffer le lait avec la vanille.",
+      "Blanchir les jaunes et le sucre.",
+      "Cuire à la nappe sans bouillir."
+    ]
+  },
+  {
+    "id": 119,
+    "t": "Biscuit madeleine",
+    "mood": "dessert",
+    "time": "40",
+    "cal": "",
+    "em": "🧁",
+    "i": [
+      "150 g de farine",
+      "150 g de sucre",
+      "3 œufs",
+      "150 g de beurre",
+      "1 sachet de levure"
+    ],
+    "s": [
+      "Mélanger les œufs et le sucre.",
+      "Ajouter le beurre fondu.",
+      "Incorporer la farine et la levure.",
+      "Cuire à 180°C pendant 10 min."
+    ]
+  },
+  {
+    "id": 120,
+    "t": "Caramel beurre salé",
+    "mood": "dessert",
+    "time": "15",
+    "cal": "",
+    "em": "🍯",
+    "i": [
+      "150 g de sucre",
+      "80 g de beurre salé",
+      "200 ml de crème liquide"
+    ],
+    "s": [
+      "Réaliser un caramel.",
+      "Ajouter le beurre.",
+      "Incorporer la crème chaude.",
+      "Laisser refroidir."
+    ]
+  },
+  {
+    "id": 121,
+    "t": "Croustillant praliné",
+    "mood": "dessert",
+    "time": "15",
+    "cal": "",
+    "em": "🍫",
+    "i": [
+      "200 g de praliné",
+      "80 g de crêpes dentelle",
+      "100 g de chocolat au lait"
+    ],
+    "s": [
+      "Faire fondre le chocolat.",
+      "Ajouter le praliné.",
+      "Incorporer les crêpes émiettées.",
+      "Étaler et réserver au frais."
+    ]
+  },
+  {
+    "id": 122,
+    "t": "Sirop d’imbibage",
+    "mood": "classic",
+    "time": "10",
+    "cal": "",
+    "em": "💧",
+    "i": [
+      "100 g de sucre",
+      "100 ml d’eau",
+      "Arôme au choix"
+    ],
+    "s": [
+      "Porter l’eau et le sucre à ébullition.",
+      "Laisser refroidir.",
+      "Ajouter l’arôme."
+    ]
+  }
+]
+[
+  {
+    "id": 123,
+    "t": "Ganache montée vanille",
+    "mood": "dessert",
+    "time": "15",
+    "cal": "",
+    "em": "🍦",
+    "i": [
+      "200 g de chocolat blanc",
+      "400 ml de crème liquide",
+      "1 gousse de vanille"
+    ],
+    "s": [
+      "Chauffer la moitié de la crème avec la vanille.",
+      "Verser sur le chocolat.",
+      "Ajouter le reste de crème froide.",
+      "Filmer et réserver au frais.",
+      "Monter avant utilisation."
+    ]
+  },
+  {
+    "id": 124,
+    "t": "Biscuit dacquoise",
+    "mood": "dessert",
+    "time": "35",
+    "cal": "",
+    "em": "🍰",
+    "i": [
+      "120 g de poudre de noisettes",
+      "120 g de sucre glace",
+      "4 blancs d’œufs",
+      "40 g de sucre"
+    ],
+    "s": [
+      "Monter les blancs.",
+      "Incorporer les sucres.",
+      "Ajouter la poudre de noisettes.",
+      "Cuire à 170°C pendant 12 min."
+    ]
+  },
+  {
+    "id": 125,
+    "t": "Compotée de fruits rouges",
+    "mood": "dessert",
+    "time": "20",
+    "cal": "",
+    "em": "🍓",
+    "i": [
+      "300 g de fruits rouges",
+      "60 g de sucre",
+      "1 jus de citron"
+    ],
+    "s": [
+      "Cuire les fruits avec le sucre.",
+      "Ajouter le jus de citron.",
+      "Laisser compoter doucement."
+    ]
+  },
+  {
+    "id": 126,
+    "t": "Crème mousseline",
+    "mood": "dessert",
+    "time": "40",
+    "cal": "",
+    "em": "🥧",
+    "i": [
+      "500 ml de lait",
+      "4 jaunes d’œufs",
+      "100 g de sucre",
+      "40 g de maïzena",
+      "200 g de beurre"
+    ],
+    "s": [
+      "Réaliser une crème pâtissière.",
+      "Laisser tiédir.",
+      "Incorporer le beurre en deux fois.",
+      "Fouetter jusqu’à obtenir une texture légère."
+    ]
+  },
+  {
+    "id": 127,
+    "t": "Pâte sucrée",
+    "mood": "classic",
+    "time": "30",
+    "cal": "",
+    "em": "🥧",
+    "i": [
+      "250 g de farine",
+      "125 g de beurre",
+      "100 g de sucre glace",
+      "1 œuf",
+      "1 pincée de sel"
+    ],
+    "s": [
+      "Sabler le beurre et la farine.",
+      "Ajouter le sucre glace.",
+      "Incorporer l’œuf.",
+      "Former une boule et réserver au frais."
+    ]
+  },
+  {
+    "id": 128,
+    "t": "Gelée de fruits",
+    "mood": "dessert",
+    "time": "20",
+    "cal": "",
+    "em": "🍒",
+    "i": [
+      "300 ml de jus de fruits",
+      "50 g de sucre",
+      "2 feuilles de gélatine"
+    ],
+    "s": [
+      "Hydrater la gélatine.",
+      "Chauffer le jus avec le sucre.",
+      "Ajouter la gélatine.",
+      "Couler et laisser prendre au frais."
+    ]
+  },
+  {
+    "id": 129,
+    "t": "Biscuit moelleux chocolat",
+    "mood": "dessert",
+    "time": "35",
+    "cal": "",
+    "em": "🍫",
+    "i": [
+      "200 g de chocolat noir",
+      "120 g de beurre",
+      "120 g de sucre",
+      "4 œufs",
+      "60 g de farine"
+    ],
+    "s": [
+      "Faire fondre le chocolat et le beurre.",
+      "Ajouter le sucre et les œufs.",
+      "Incorporer la farine.",
+      "Cuire à 180°C pendant 12 min."
+    ]
+  },
+  {
+    "id": 130,
+    "t": "Crème citron",
+    "mood": "dessert",
+    "time": "20",
+    "cal": "",
+    "em": "🍋",
+    "i": [
+      "3 citrons",
+      "150 g de sucre",
+      "3 œufs",
+      "100 g de beurre"
+    ],
+    "s": [
+      "Mélanger jus de citron, sucre et œufs.",
+      "Cuire doucement jusqu’à épaississement.",
+      "Ajouter le beurre.",
+      "Mixer et refroidir."
+    ]
+  },
+  {
+    "id": 131,
+    "t": "Meringue française",
+    "mood": "dessert",
+    "time": "90",
+    "cal": "",
+    "em": "☁️",
+    "i": [
+      "4 blancs d’œufs",
+      "200 g de sucre"
+    ],
+    "s": [
+      "Monter les blancs.",
+      "Incorporer le sucre progressivement.",
+      "Pocher les meringues.",
+      "Cuire à 90°C pendant 1h30."
+    ]
+  },
+  {
+    "id": 132,
+    "t": "Pâte sablée cacao",
+    "mood": "dessert",
+    "time": "30",
+    "cal": "",
+    "em": "🍪",
+    "i": [
+      "230 g de farine",
+      "20 g de cacao",
+      "125 g de beurre",
+      "100 g de sucre glace",
+      "1 œuf"
+    ],
+    "s": [
+      "Mélanger les ingrédients secs.",
+      "Ajouter le beurre puis l’œuf.",
+      "Former la pâte.",
+      "Réserver au frais avant utilisation."
+    ]
+  }
+]
+[
+  {
+    "id": 133,
+    "t": "Crème légère vanille",
+    "mood": "dessert",
+    "time": "20",
+    "cal": "",
+    "em": "🍨",
+    "i": [
+      "250 ml de lait",
+      "2 jaunes d’œufs",
+      "60 g de sucre",
+      "20 g de maïzena",
+      "200 ml de crème liquide"
+    ],
+    "s": [
+      "Réaliser une crème pâtissière.",
+      "Laisser refroidir.",
+      "Monter la crème liquide.",
+      "Incorporer délicatement."
+    ]
+  },
+  {
+    "id": 134,
+    "t": "Biscuit roulé",
+    "mood": "dessert",
+    "time": "25",
+    "cal": "",
+    "em": "🍰",
+    "i": [
+      "4 œufs",
+      "120 g de sucre",
+      "120 g de farine"
+    ],
+    "s": [
+      "Blanchir les œufs et le sucre.",
+      "Incorporer la farine.",
+      "Cuire sur plaque.",
+      "Rouler à chaud."
+    ]
+  },
+  {
+    "id": 135,
+    "t": "Pâte feuilletée rapide",
+    "mood": "classic",
+    "time": "45",
+    "cal": "",
+    "em": "🥐",
+    "i": [
+      "250 g de farine",
+      "250 g de beurre froid",
+      "125 ml d’eau",
+      "1 pincée de sel"
+    ],
+    "s": [
+      "Mélanger farine, sel et eau.",
+      "Incorporer le beurre.",
+      "Donner plusieurs tours.",
+      "Réserver au frais."
+    ]
+  },
+  {
+    "id": 136,
+    "t": "Crémeux chocolat",
+    "mood": "dessert",
+    "time": "20",
+    "cal": "",
+    "em": "🍫",
+    "i": [
+      "200 g de chocolat noir",
+      "250 ml de lait",
+      "4 jaunes d’œufs",
+      "50 g de sucre"
+    ],
+    "s": [
+      "Chauffer le lait.",
+      "Blanchir jaunes et sucre.",
+      "Cuire comme une crème anglaise.",
+      "Verser sur le chocolat."
+    ]
+  },
+  {
+    "id": 137,
+    "t": "Coulis de fruits rouges",
+    "mood": "dessert",
+    "time": "10",
+    "cal": "",
+    "em": "🍓",
+    "i": [
+      "250 g de fruits rouges",
+      "50 g de sucre",
+      "1 jus de citron"
+    ],
+    "s": [
+      "Mixer tous les ingrédients.",
+      "Filtrer si nécessaire.",
+      "Réserver au frais."
+    ]
+  },
+  {
+    "id": 138,
+    "t": "Biscuit financier",
+    "mood": "dessert",
+    "time": "30",
+    "cal": "",
+    "em": "🧁",
+    "i": [
+      "120 g de beurre",
+      "120 g de sucre glace",
+      "120 g de poudre d’amandes",
+      "4 blancs d’œufs",
+      "40 g de farine"
+    ],
+    "s": [
+      "Faire un beurre noisette.",
+      "Mélanger les poudres.",
+      "Ajouter les blancs.",
+      "Cuire à 180°C pendant 12 min."
+    ]
+  },
+  {
+    "id": 139,
+    "t": "Crème montée mascarpone",
+    "mood": "dessert",
+    "time": "10",
+    "cal": "",
+    "em": "🍦",
+    "i": [
+      "250 g de mascarpone",
+      "250 ml de crème liquide",
+      "60 g de sucre glace"
+    ],
+    "s": [
+      "Fouetter tous les ingrédients froids.",
+      "Monter jusqu’à texture ferme.",
+      "Utiliser immédiatement."
+    ]
+  },
+  {
+    "id": 140,
+    "t": "Biscuit streusel",
+    "mood": "dessert",
+    "time": "25",
+    "cal": "",
+    "em": "🍪",
+    "i": [
+      "100 g de farine",
+      "100 g de beurre",
+      "100 g de sucre",
+      "100 g de poudre d’amandes"
+    ],
+    "s": [
+      "Sabler tous les ingrédients.",
+      "Émietter sur plaque.",
+      "Cuire à 170°C pendant 15 min."
+    ]
+  },
+  {
+    "id": 141,
+    "t": "Crème café",
+    "mood": "dessert",
+    "time": "15",
+    "cal": "",
+    "em": "☕",
+    "i": [
+      "250 ml de lait",
+      "2 jaunes d’œufs",
+      "60 g de sucre",
+      "1 café expresso"
+    ],
+    "s": [
+      "Chauffer le lait.",
+      "Mélanger jaunes et sucre.",
+      "Cuire doucement.",
+      "Ajouter le café."
+    ]
+  },
+  {
+    "id": 142,
+    "t": "Pâte à crumble",
+    "mood": "dessert",
+    "time": "15",
+    "cal": "",
+    "em": "🍎",
+    "i": [
+      "100 g de beurre",
+      "100 g de sucre",
+      "100 g de farine"
+    ],
+    "s": [
+      "Mélanger tous les ingrédients du bout des doigts.",
+      "Obtenir une texture sableuse.",
+      "Utiliser avant cuisson."
+    ]
+  }
+]
+[
+  {
+    "id": 143,
+    "t": "Crème pâtissière chocolat",
+    "mood": "dessert",
+    "time": "20",
+    "cal": "",
+    "em": "🍫",
+    "i": [
+      "500 ml de lait",
+      "4 jaunes d’œufs",
+      "100 g de sucre",
+      "40 g de maïzena",
+      "150 g de chocolat noir"
+    ],
+    "s": [
+      "Chauffer le lait.",
+      "Blanchir jaunes et sucre.",
+      "Ajouter la maïzena.",
+      "Cuire jusqu’à épaississement.",
+      "Incorporer le chocolat."
+    ]
+  },
+  {
+    "id": 144,
+    "t": "Biscuit noisette",
+    "mood": "dessert",
+    "time": "30",
+    "cal": "",
+    "em": "🌰",
+    "i": [
+      "120 g de poudre de noisettes",
+      "120 g de sucre",
+      "4 œufs",
+      "40 g de farine"
+    ],
+    "s": [
+      "Blanchir œufs et sucre.",
+      "Ajouter la poudre de noisettes.",
+      "Incorporer la farine.",
+      "Cuire à 180°C pendant 12 min."
+    ]
+  },
+  {
+    "id": 145,
+    "t": "Insert caramel",
+    "mood": "dessert",
+    "time": "20",
+    "cal": "",
+    "em": "🍯",
+    "i": [
+      "150 g de sucre",
+      "200 ml de crème liquide",
+      "2 feuilles de gélatine"
+    ],
+    "s": [
+      "Hydrater la gélatine.",
+      "Réaliser un caramel.",
+      "Ajouter la crème chaude.",
+      "Incorporer la gélatine.",
+      "Couler et congeler."
+    ]
+  },
+  {
+    "id": 146,
+    "t": "Biscuit génoise cacao",
+    "mood": "dessert",
+    "time": "30",
+    "cal": "",
+    "em": "🍰",
+    "i": [
+      "4 œufs",
+      "120 g de sucre",
+      "80 g de farine",
+      "40 g de cacao"
+    ],
+    "s": [
+      "Blanchir œufs et sucre.",
+      "Incorporer farine et cacao.",
+      "Cuire à 180°C pendant 12 min."
+    ]
+  },
+  {
+    "id": 147,
+    "t": "Compotée mangue passion",
+    "mood": "dessert",
+    "time": "25",
+    "cal": "",
+    "em": "🥭",
+    "i": [
+      "2 mangues",
+      "2 fruits de la passion",
+      "60 g de sucre"
+    ],
+    "s": [
+      "Couper les fruits.",
+      "Cuire avec le sucre.",
+      "Laisser compoter doucement."
+    ]
+  },
+  {
+    "id": 148,
+    "t": "Crème montée chocolat",
+    "mood": "dessert",
+    "time": "10",
+    "cal": "",
+    "em": "🍫",
+    "i": [
+      "200 g de chocolat noir",
+      "400 ml de crème liquide"
+    ],
+    "s": [
+      "Faire fondre le chocolat.",
+      "Ajouter la crème froide.",
+      "Réserver au frais.",
+      "Monter avant utilisation."
+    ]
+  },
+  {
+    "id": 149,
+    "t": "Biscuit cuillère",
+    "mood": "dessert",
+    "time": "35",
+    "cal": "",
+    "em": "🥄",
+    "i": [
+      "4 œufs",
+      "120 g de sucre",
+      "120 g de farine"
+    ],
+    "s": [
+      "Séparer blancs et jaunes.",
+      "Monter les blancs avec le sucre.",
+      "Incorporer les jaunes puis la farine.",
+      "Cuire à 180°C pendant 10 min."
+    ]
+  },
+  {
+    "id": 150,
+    "t": "Crémeux citron",
+    "mood": "dessert",
+    "time": "20",
+    "cal": "",
+    "em": "🍋",
+    "i": [
+      "4 citrons",
+      "150 g de sucre",
+      "4 œufs",
+      "120 g de beurre"
+    ],
+    "s": [
+      "Mélanger jus, sucre et œufs.",
+      "Cuire doucement jusqu’à épaississement.",
+      "Ajouter le beurre.",
+      "Mixer et refroidir."
+    ]
+  },
+  {
+    "id": 151,
+    "t": "Biscuit brownie",
+    "mood": "dessert",
+    "time": "35",
+    "cal": "",
+    "em": "🍫",
+    "i": [
+      "200 g de chocolat",
+      "150 g de beurre",
+      "150 g de sucre",
+      "3 œufs",
+      "80 g de farine"
+    ],
+    "s": [
+      "Fondre chocolat et beurre.",
+      "Ajouter sucre et œufs.",
+      "Incorporer la farine.",
+      "Cuire à 180°C pendant 15 min."
+    ]
+  },
+  {
+    "id": 152,
+    "t": "Nappage neutre",
+    "mood": "classic",
+    "time": "15",
+    "cal": "",
+    "em": "✨",
+    "i": [
+      "200 ml d’eau",
+      "150 g de sucre",
+      "2 feuilles de gélatine"
+    ],
+    "s": [
+      "Hydrater la gélatine.",
+      "Chauffer eau et sucre.",
+      "Ajouter la gélatine.",
+      "Utiliser tiède."
+    ]
+  }
+]
