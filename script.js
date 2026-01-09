@@ -45,6 +45,16 @@ async function loadRecipes() {
     allRecipes = [...DEFAULT_RECIPES, ...externalRecipes, ...userLocalRecipes];
     updateStats();
 }
+async function loadRecipes() {
+    let externalRecipes = [];
+    try {
+        const response = await fetch('data/desserts.json');
+        if (response.ok) externalRecipes = await response.json();
+    } catch (e) { console.log("Local mode"); }
+    const userLocalRecipes = JSON.parse(localStorage.getItem('foodmood_user_recipes') || '[]');
+    allRecipes = [...DEFAULT_RECIPES, ...externalRecipes, ...userLocalRecipes];
+    updateStats();
+}
 
 // --- FAVORIS ---
 function loadFavorites() {
