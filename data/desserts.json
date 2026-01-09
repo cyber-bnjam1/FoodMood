@@ -1,0 +1,221 @@
+[
+  {
+    "id": 103,
+    "t": "Number Cake 3 chocolats",
+    "mood": "dessert",
+    "time": "120",
+    "cal": "",
+    "em": "🎂",
+    "i": [
+      "500 g de farine",
+      "180 g de sucre glace",
+      "60 g de poudre d’amandes",
+      "250 g de beurre",
+      "2 œufs",
+      "200 g de chocolat noir",
+      "200 g de chocolat au lait",
+      "200 g de chocolat blanc",
+      "200 g de crème liquide",
+      "1 feuille de gélatine"
+    ],
+    "s": [
+      "Mélanger les ingrédients secs.",
+      "Ajouter le beurre et les œufs pour former la pâte.",
+      "Filmer et réserver 30 min au frais.",
+      "Cuire les biscuits.",
+      "Préparer les ganaches.",
+      "Monter le gâteau en alternant biscuit et crème."
+    ]
+  },
+  {
+    "id": 104,
+    "t": "Glaçage miroir blanc ou coloré",
+    "mood": "dessert",
+    "time": "30",
+    "cal": "",
+    "em": "🍰",
+    "i": [
+      "150 g de sucre",
+      "75 g d’eau",
+      "150 g de glucose",
+      "100 g de lait concentré sucré",
+      "150 g de chocolat blanc",
+      "2 feuilles de gélatine",
+      "Colorant alimentaire"
+    ],
+    "s": [
+      "Hydrater la gélatine.",
+      "Porter à ébullition eau, sucre et glucose.",
+      "Verser sur le chocolat blanc.",
+      "Ajouter la gélatine et mixer.",
+      "Utiliser à 32°C sur un gâteau congelé."
+    ]
+  },
+  {
+    "id": 105,
+    "t": "Pâte à choux",
+    "mood": "classic",
+    "time": "45",
+    "cal": "",
+    "em": "🥐",
+    "i": [
+      "250 ml d’eau",
+      "100 g de beurre",
+      "150 g de farine",
+      "4 œufs",
+      "1 pincée de sel"
+    ],
+    "s": [
+      "Faire bouillir l’eau, le beurre et le sel.",
+      "Ajouter la farine hors du feu.",
+      "Dessécher la pâte.",
+      "Incorporer les œufs un à un.",
+      "Cuire à 180°C pendant 30 min."
+    ]
+  },
+  {
+    "id": 106,
+    "t": "Paris-Brest",
+    "mood": "dessert",
+    "time": "90",
+    "cal": "",
+    "em": "🥨",
+    "i": [
+      "Pâte à choux",
+      "100 g de beurre",
+      "100 g de sucre",
+      "100 g de poudre de noisettes",
+      "2 œufs",
+      "Crème pâtissière"
+    ],
+    "s": [
+      "Former une couronne en pâte à choux.",
+      "Cuire au four.",
+      "Préparer la crème pralinée.",
+      "Couper et garnir.",
+      "Saupoudrer de sucre glace."
+    ]
+  },
+  {
+    "id": 107,
+    "t": "Pastéis de Nata",
+    "mood": "dessert",
+    "time": "60",
+    "cal": "",
+    "em": "🥧",
+    "i": [
+      "Pâte feuilletée",
+      "500 ml de lait",
+      "6 jaunes d’œufs",
+      "150 g de sucre",
+      "40 g de farine",
+      "Zeste de citron",
+      "Cannelle"
+    ],
+    "s": [
+      "Porter le lait à ébullition avec le zeste.",
+      "Mélanger jaunes, sucre et farine.",
+      "Incorporer le lait chaud.",
+      "Verser dans les moules.",
+      "Cuire à 240°C jusqu’à caramélisation."
+    ]
+  },
+  {
+    "id": 108,
+    "t": "Crème pâtissière",
+    "mood": "classic",
+    "time": "20",
+    "cal": "",
+    "em": "🥄",
+    "i": [
+      "500 ml de lait",
+      "4 jaunes d’œufs",
+      "100 g de sucre",
+      "40 g de maïzena",
+      "1 gousse de vanille"
+    ],
+    "s": [
+      "Faire chauffer le lait avec la vanille.",
+      "Blanchir les jaunes avec le sucre.",
+      "Ajouter la maïzena.",
+      "Cuire jusqu’à épaississement.",
+      "Filmer au contact."
+    ]
+  },
+  {
+    "id": 109,
+    "t": "Ganache chocolat noir",
+    "mood": "dessert",
+    "time": "15",
+    "cal": "",
+    "em": "🍫",
+    "i": [
+      "200 g de chocolat noir",
+      "200 g de crème liquide"
+    ],
+    "s": [
+      "Chauffer la crème.",
+      "Verser sur le chocolat.",
+      "Mélanger jusqu’à obtenir une ganache lisse."
+    ]
+  },
+  {
+    "id": 110,
+    "t": "Biscuit sablé",
+    "mood": "classic",
+    "time": "40",
+    "cal": "",
+    "em": "🍪",
+    "i": [
+      "250 g de farine",
+      "125 g de beurre",
+      "100 g de sucre",
+      "1 œuf",
+      "1 pincée de sel"
+    ],
+    "s": [
+      "Sabler le beurre et la farine.",
+      "Ajouter le sucre et l’œuf.",
+      "Former une pâte.",
+      "Cuire à 180°C pendant 15 min."
+    ]
+  },
+  {
+    "id": 111,
+    "t": "Crème au beurre",
+    "mood": "dessert",
+    "time": "30",
+    "cal": "",
+    "em": "🧁",
+    "i": [
+      "250 g de beurre",
+      "150 g de sucre glace",
+      "2 jaunes d’œufs",
+      "Extrait de vanille"
+    ],
+    "s": [
+      "Travailler le beurre en pommade.",
+      "Ajouter le sucre glace.",
+      "Incorporer les jaunes.",
+      "Aromatiser."
+    ]
+  },
+  {
+    "id": 112,
+    "t": "Chantilly mascarpone",
+    "mood": "dessert",
+    "time": "10",
+    "cal": "",
+    "em": "🍨",
+    "i": [
+      "250 g de mascarpone",
+      "250 ml de crème liquide",
+      "50 g de sucre glace"
+    ],
+    "s": [
+      "Fouetter tous les ingrédients bien froids.",
+      "Monter jusqu’à texture ferme.",
+      "Utiliser immédiatement."
+    ]
+  }
+]
