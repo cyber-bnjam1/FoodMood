@@ -31,14 +31,18 @@ async function initApp() { await loadRecipes(); loadFavorites(); loadShoppingLis
 
 async function loadRecipes() {
     let externalRecipes = []; let dessertRecipes = [];
+    // Chargement Recettes Générales
     try { const r = await fetch('data/recettes.json'); if (r.ok) externalRecipes = await r.json(); } catch (e) {}
+    // Chargement Desserts
     try { 
         const r = await fetch('data/desserts.json'); 
         if (r.ok) { 
             const d = await r.json(); 
+            // On force le mood et la catégorie pour les desserts
             dessertRecipes = d.map(x => ({...x, mood: 'patisserie', cat: 'dessert', price: "2"})); 
         } 
     } catch (e) {}
+    
     const userLocalRecipes = JSON.parse(localStorage.getItem('foodmood_user_recipes') || '[]');
     allRecipes = [...DEFAULT_RECIPES, ...externalRecipes, ...dessertRecipes, ...userLocalRecipes];
     updateStats();
@@ -69,7 +73,7 @@ function updateStats() {
     document.getElementById('fav-count').textContent = favorites.length;
 }
 
-// --- FRIDGE MODE ---
+// --- FRIDGE MODE (Recherche par ingrédients) ---
 function addFridgeItem() {
     const input = document.getElementById('fridge-input'); const val = input.value.trim();
     if(val && !fridgeIngredients.includes(val)) { fridgeIngredients.push(val); input.value = ""; renderFridgeTags(); }
@@ -82,16 +86,17 @@ function renderFridgeTags() {
 function searchFridge() {
     const resultsDiv = document.getElementById('fridge-results'); resultsDiv.innerHTML = "";
     if(fridgeIngredients.length === 0) { resultsDiv.innerHTML = `<div class="text-center text-gray-400">Ajoute des ingrédients !</div>`; return; }
+    // Recherche si AU MOINS UN ingrédient correspond
     const matches = allRecipes.filter(r => r.i.some(recipeIng => fridgeIngredients.some(fridgeWord => recipeIng.toLowerCase().includes(fridgeWord.toLowerCase()))));
     if(matches.length === 0) { resultsDiv.innerHTML = `<div class="text-center text-gray-400">Aucune recette trouvée... 🍳</div>`; } 
     else { renderCookbookList(matches, 'fridge-results'); }
 }
 
-// --- WAKE LOCK ---
+// --- WAKE LOCK (No-Sleep en cuisine) ---
 async function requestWakeLock() { try { if ('wakeLock' in navigator) { wakeLock = await navigator.wakeLock.request('screen'); } } catch (err) {} }
 async function releaseWakeLock() { if (wakeLock !== null) { await wakeLock.release(); wakeLock = null; } }
 
-// --- SMART SHOPPING (TRI INTELLIGENT) ---
+// --- SMART SHOPPING (Tri par rayon) ---
 function loadShoppingList() { shoppingList = JSON.parse(localStorage.getItem('foodmood_shopping') || '[]'); }
 function saveShoppingList() { localStorage.setItem('foodmood_shopping', JSON.stringify(shoppingList)); renderShoppingList(); }
 function addShopItemManually() {
@@ -107,12 +112,12 @@ function addAllToShop() {
 function toggleShopItem(idx) { shoppingList[idx].done = !shoppingList[idx].done; saveShoppingList(); }
 function clearShoppingList() { shoppingList = []; saveShoppingList(); }
 
-// Logique de tri par rayon
+// Logique de détection de rayon
 function getCategoryForIngredient(name) {
     const n = name.toLowerCase();
     const cats = {
         '🥬 Fruits & Légumes': ['pomme','poire','banane','citron','orange','fraise','kiwi','tomate','salade','oignon','ail','échalote','carotte','courgette','poivron','champignon','avocat','concombre','pomme de terre','haricot','épinard','légume','herbe','basilic','persil','ciboulette','menthe'],
-        '🥩 Viandes & Poissons': ['poulet','boeuf','porc','jambon','lardons','saucisse','steak','haché','bacon','thon','saumon','crevette','poisson','cabillaud','surimi'],
+        '🥩 Viandes & Poissons': ['poulet','boeuf','porc','jambon','lardons','saucisse','steak','haché','bacon','thon','saumon','crevette','poisson','cabillaud','surimi','dinde'],
         '🥛 Frais & Crèmerie': ['lait','beurre','crème','yaourt','fromage','oeuf','emmental','mozzarella','parmesan','cheddar','comté','raclette','chèvre'],
         '🍝 Épicerie': ['riz','pâtes','spaghetti','coquillette','tortilla','pain','burger','mie','farine','sucre','sel','poivre','huile','vinaigre','épice','curry','paprika','sauce','mayonnaise','ketchup','soja','chocolat','cacao','levure','vanille','biscuit','bouillon','maïs','thon boite']
     };
@@ -126,7 +131,7 @@ function renderShoppingList() {
     const container = document.getElementById('shopping-list'); container.innerHTML = "";
     if(shoppingList.length === 0) { container.innerHTML = "<div class='text-center text-gray-400 mt-10'>Panier vide 🛒</div>"; return; }
     
-    // Group by category
+    // Groupement par catégories
     const groups = {};
     shoppingList.forEach((item, idx) => {
         const cat = getCategoryForIngredient(item.t);
@@ -134,10 +139,7 @@ function renderShoppingList() {
         groups[cat].push({ ...item, originalIdx: idx });
     });
 
-    // Render groups
-    // Sort categories specific order if needed, otherwise alphabetical
     const sortedCats = Object.keys(groups).sort();
-    
     sortedCats.forEach(cat => {
         container.innerHTML += `<h3 class="text-xs font-black text-gray-400 uppercase tracking-widest mt-4 mb-2 ml-1">${cat}</h3>`;
         groups[cat].forEach(item => {
@@ -184,6 +186,7 @@ function navigate(viewName) {
     if(viewName === 'home') document.getElementById('nav-home').classList.add('active');
     if(viewName === 'cookbook') document.getElementById('nav-book').classList.add('active');
     if(viewName === 'shop') document.getElementById('nav-shop').classList.add('active');
+    // Gestion écran allumé
     if(viewName === 'cook') { requestWakeLock(); } else { releaseWakeLock(); }
 }
 function findRecipe(mood) { activeMood = mood; rollDice(); navigate('result'); }
@@ -206,7 +209,7 @@ function renderResult(r) {
     document.getElementById('res-time').textContent = r.time + ' min';
     document.getElementById('res-cal').textContent = r.cal + ' kcal';
     
-    // Display Price
+    // Affichage Prix
     const priceEl = document.getElementById('res-price');
     const p = r.price || "2";
     priceEl.textContent = p === "1" ? "€" : (p === "2" ? "€€" : "€€€");
@@ -280,7 +283,7 @@ function renderCookbookList(list, targetId) {
     });
 }
 
-// --- ADD/EDIT & WEB IMPORT ---
+// --- ADD/EDIT ---
 function openAddMode() { editingRecipeId = null; document.getElementById('form-title').textContent="Nouvelle Recette"; resetForm(); navigate('add'); }
 function openEditMode() {
     if(!currentRecipe) return; editingRecipeId = currentRecipe.id;
@@ -298,73 +301,6 @@ function openEditMode() {
 }
 function cancelEdit() { if(editingRecipeId) navigate('result'); else navigate('home'); resetForm(); editingRecipeId = null; }
 function resetForm() { document.getElementById('add-title').value=""; document.getElementById('add-ing').value=""; document.getElementById('add-steps').value=""; }
-
-function toggleImportModal() { document.getElementById('import-modal').classList.toggle('hidden'); }
-async function fetchRecipeFromUrl() {
-    const url = document.getElementById('import-url').value;
-    const btn = document.getElementById('btn-import-action');
-    if(!url) return;
-
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyse...';
-    
-    try {
-        // Use allorigins as CORS proxy
-        const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
-        const response = await fetch(proxyUrl);
-        const data = await response.json();
-        
-        if (!data.contents) throw new Error("Pas de contenu");
-
-        // Parse HTML
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(data.contents, "text/html");
-        
-        // Find JSON-LD
-        let recipeData = null;
-        const scripts = doc.querySelectorAll('script[type="application/ld+json"]');
-        
-        for (let s of scripts) {
-            try {
-                const json = JSON.parse(s.innerText);
-                // Handle various JSON-LD structures (Graph or simple object)
-                const findRecipe = (obj) => {
-                    if (obj['@type'] === 'Recipe') return obj;
-                    if (Array.isArray(obj['@graph'])) return obj['@graph'].find(x => x['@type'] === 'Recipe');
-                    if (Array.isArray(obj)) return obj.find(x => x['@type'] === 'Recipe');
-                    return null;
-                };
-                const found = findRecipe(json);
-                if (found) { recipeData = found; break; }
-            } catch(e) {}
-        }
-
-        if (recipeData) {
-            document.getElementById('add-title').value = recipeData.name || "";
-            // Instructions
-            if(Array.isArray(recipeData.recipeInstructions)) {
-                const steps = recipeData.recipeInstructions.map(s => s.text || s.name || s).join('\n');
-                document.getElementById('add-steps').value = steps;
-            }
-            // Ingredients
-            if(Array.isArray(recipeData.recipeIngredient)) {
-                document.getElementById('add-ing').value = recipeData.recipeIngredient.join('\n');
-            }
-            // Image/Emoji guess (Basic)
-            document.getElementById('add-emoji').value = '🍲'; 
-            
-            toggleImportModal();
-            alert("Recette importée ! Vérifie les champs.");
-        } else {
-            alert("Impossible de lire la recette automatiquement sur ce site. 🥲");
-        }
-    } catch (e) {
-        alert("Erreur lors de l'importation.");
-        console.error(e);
-    } finally {
-        btn.innerHTML = '<i class="fas fa-magic"></i> Importer';
-    }
-}
-
 
 function saveRecipe() {
     const title = document.getElementById('add-title').value;
@@ -395,6 +331,108 @@ function saveRecipe() {
     editingRecipeId = null;
 }
 
+// --- IMPORT WEB (CORRIGÉ & ROBUSTE) ---
+function toggleImportModal() { document.getElementById('import-modal').classList.toggle('hidden'); }
+
+async function fetchRecipeFromUrl() {
+    const url = document.getElementById('import-url').value;
+    const btn = document.getElementById('btn-import-action');
+    if(!url) return;
+
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyse...';
+    btn.disabled = true;
+    
+    try {
+        // Utilisation de corsproxy.io pour contourner les protections
+        const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(url);
+        const response = await fetch(proxyUrl);
+        if (!response.ok) throw new Error("Erreur réseau");
+        
+        const html = await response.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, "text/html");
+        
+        // Recherche du JSON-LD
+        let recipeData = null;
+        const scripts = doc.querySelectorAll('script[type="application/ld+json"]');
+        
+        const findRecipeInObject = (obj) => {
+            if (!obj) return null;
+            if (obj['@type'] === 'Recipe') return obj;
+            if (Array.isArray(obj['@graph'])) return obj['@graph'].find(x => x['@type'] === 'Recipe');
+            if (Array.isArray(obj)) return obj.find(x => x['@type'] === 'Recipe');
+            return null;
+        };
+
+        for (let s of scripts) {
+            try {
+                const json = JSON.parse(s.innerText);
+                const found = findRecipeInObject(json);
+                if (found) { recipeData = found; break; }
+            } catch(e) {}
+        }
+
+        if (recipeData) {
+            document.getElementById('add-title').value = recipeData.name || "";
+            
+            // Ingrédients
+            if(Array.isArray(recipeData.recipeIngredient)) {
+                document.getElementById('add-ing').value = recipeData.recipeIngredient.join('\n');
+            }
+
+            // Étapes
+            if(Array.isArray(recipeData.recipeInstructions)) {
+                const steps = recipeData.recipeInstructions.map(s => (s.text || s.name || s).replace(/&nbsp;/g, ' ').trim()).join('\n');
+                document.getElementById('add-steps').value = steps;
+            } else if (typeof recipeData.recipeInstructions === 'string') {
+                document.getElementById('add-steps').value = recipeData.recipeInstructions;
+            }
+
+            // Emoji
+            const titleLower = (recipeData.name || "").toLowerCase();
+            let em = '🥘';
+            if(titleLower.includes('gâteau') || titleLower.includes('tarte') || titleLower.includes('sucré')) em = '🍰';
+            if(titleLower.includes('salade')) em = '🥗';
+            if(titleLower.includes('soupe')) em = '🥣';
+            if(titleLower.includes('pizza')) em = '🍕';
+            if(titleLower.includes('burger')) em = '🍔';
+            document.getElementById('add-emoji').value = em;
+
+            // Temps (ISO format PT20M)
+            const timeStr = recipeData.totalTime || recipeData.cookTime;
+            if(timeStr) {
+                const hoursMatch = timeStr.match(/(\d+)H/);
+                const minsMatch = timeStr.match(/(\d+)M/);
+                let totalMin = 0;
+                if(hoursMatch) totalMin += parseInt(hoursMatch[1]) * 60;
+                if(minsMatch) totalMin += parseInt(minsMatch[1]);
+                if(totalMin > 0) document.getElementById('add-time').value = totalMin;
+            }
+
+            toggleImportModal();
+            alert("Recette importée !");
+        } else {
+            // Fallback Titre uniquement
+            const h1 = doc.querySelector('h1');
+            if(h1) {
+                document.getElementById('add-title').value = h1.innerText.trim();
+                toggleImportModal();
+                alert("Import partiel (Titre uniquement). Le site protège ses données.");
+            } else {
+                throw new Error("Format non reconnu");
+            }
+        }
+    } catch (e) {
+        console.error(e);
+        alert("Impossible d'importer cette recette automatiquement.");
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
+
+// --- UTILS ---
 function shareRecipe() {
     if(!currentRecipe) return;
     const text = `👨‍🍳 Je vais cuisiner : ${currentRecipe.t} (${currentRecipe.time}min).\nIl faut : ${currentRecipe.i.join(', ')}.`;
