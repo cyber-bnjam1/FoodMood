@@ -1,19 +1,14 @@
-// Base de données des recettes
-// Moods: 'fast', 'healthy', 'comfort', 'patisserie'
-// Cats: 'starter' (Entrée), 'main' (Plat), 'dessert' (Dessert)
-// Price: '1' (€), '2' (€€), '3' (€€€)
-
 const RECIPES_DATA = [
-    // --- ENTRÉES (STARTERS) ---
+    // --- ENTRÉES ---
     { id: 101, t: "Velouté Potimarron", mood: "healthy", cat: "starter", price: "1", time: "25", cal: "150", em: "🥣", i: ["1/2 Potimarron", "1 Oignon", "1 cube Bouillon", "2cs Crème fraîche"], s: ["Couper le potimarron et l'oignon.", "Cuire 20min dans l'eau bouillante avec le cube.", "Mixer et ajouter la crème."] },
     { id: 102, t: "Oeuf Cocotte", mood: "comfort", cat: "starter", price: "1", time: "15", cal: "200", em: "🥚", i: ["2 Oeufs", "2cs Crème", "Ciboulette", "Pain mouillettes"], s: ["Mettre crème et oeuf dans un ramequin.", "Cuire au bain-marie (four) 12min.", "Servir avec mouillettes."] },
     { id: 103, t: "Tartines Chèvre Miel", mood: "fast", cat: "starter", price: "1", time: "10", cal: "250", em: "🧀", i: ["4 tranches Pain", "Fromage de Chèvre", "Miel", "Thym"], s: ["Toaster le pain.", "Mettre le chèvre et le miel.", "Passer 2min sous le grill."] },
     { id: 104, t: "Carpaccio Tomate Moza", mood: "healthy", cat: "starter", price: "2", time: "5", cal: "220", em: "🍅", i: ["2 Tomates", "1 boule Mozzarella", "Huile d'olive", "Basilic"], s: ["Couper tomates et moza en tranches fines.", "Alterner sur l'assiette.", "Arroser d'huile et basilic."] },
-    { id: 105, t: "Rillettes de Thon", mood: "fast", cat: "starter", price: "1", time: "5", cal: "180", em: "🐟", i: ["1 boite Thon", "2cs Fromage frais (St Moret)", "Ciboulette", "Jus de citron"], s: ["Écraser le thon à la fourchette.", "Mélanger avec le fromage frais et citron.", "Servir frais."] },
+    { id: 105, t: "Rillettes de Thon", mood: "fast", cat: "starter", price: "1", time: "5", cal: "180", em: "🐟", i: ["1 boite Thon", "2cs Fromage frais", "Ciboulette", "Jus de citron"], s: ["Écraser le thon à la fourchette.", "Mélanger avec le fromage frais et citron.", "Servir frais."] },
     { id: 106, t: "Gaspacho Andalou", mood: "healthy", cat: "starter", price: "1", time: "15", cal: "120", em: "🥤", i: ["5 Tomates", "1/2 Poivron", "1/2 Concombre", "Ail", "Huile d'olive"], s: ["Mixer tous les légumes crus.", "Assaisonner.", "Servir très frais."] },
     { id: 107, t: "Avocado Toast", mood: "healthy", cat: "starter", price: "2", time: "5", cal: "280", em: "🥑", i: ["1 Avocat", "2 tranches Pain complet", "Piment", "Citron"], s: ["Ecraser l'avocat sur le pain grillé.", "Ajouter sel, piment et citron."] },
 
-    // --- PLATS (MAINS) ---
+    // --- PLATS ---
     { id: 201, t: "Pâtes Cacio e Pepe", mood: "fast", cat: "main", price: "1", time: "12", cal: "450", em: "🍝", i: ["200g Spaghetti", "100g Pecorino/Parmesan", "Poivre noir", "Eau de cuisson"], s: ["Cuire les pâtes al dente.", "Mélanger fromage et un peu d'eau de cuisson pour faire une crème.", "Poivrer généreusement."] },
     { id: 202, t: "Burger Maison", mood: "comfort", cat: "main", price: "2", time: "20", cal: "650", em: "🍔", i: ["Pain Bun", "Steak haché", "Cheddar", "Oignons confits", "Sauce Burger"], s: ["Toaster le pain.", "Cuire le steak.", "Fondre le cheddar dessus.", "Monter le burger."] },
     { id: 203, t: "Poké Bowl Saumon", mood: "healthy", cat: "main", price: "3", time: "20", cal: "450", em: "🍣", i: ["Riz vinaigré", "Saumon cru", "Avocat", "Concombre", "Sésame"], s: ["Cuire le riz.", "Couper le poisson et légumes en dés.", "Disposer joliment dans un bol."] },
@@ -27,7 +22,7 @@ const RECIPES_DATA = [
     { id: 211, t: "Poulet Rôti Patates", mood: "comfort", cat: "main", price: "2", time: "60", cal: "600", em: "🍗", i: ["Poulet entier ou cuisses", "Pommes de terre", "Thym", "Beurre"], s: ["Mettre tout dans un plat.", "Cuire 1h à 200°C.", "Arroser de jus régulièrement."] },
     { id: 212, t: "Chili Con Carne", mood: "comfort", cat: "main", price: "1", time: "40", cal: "500", em: "🌶️", i: ["Viande hachée", "Haricots rouges", "Tomates pelées", "Épices Chili", "Oignon"], s: ["Saisir la viande et oignons.", "Ajouter tomates et haricots.", "Mijoter 30min."] },
 
-    // --- DESSERTS & PÂTISSERIE ---
+    // --- DESSERTS ---
     { id: 301, t: "Fondant Chocolat", mood: "patisserie", cat: "dessert", price: "1", time: "15", cal: "450", em: "🍫", i: ["200g Chocolat", "150g Beurre", "150g Sucre", "50g Farine", "3 Oeufs"], s: ["Fondre choco/beurre.", "Mélanger oeufs/sucre puis farine.", "Cuire 12min à 180°C."] },
     { id: 302, t: "Cookies Pépites", mood: "patisserie", cat: "dessert", price: "1", time: "20", cal: "300", em: "🍪", i: ["120g Beurre mou", "100g Sucre roux", "1 Oeuf", "220g Farine", "Pépites choco"], s: ["Mélanger beurre/sucre.", "Ajouter oeuf et farine.", "Former boules.", "Cuire 10min à 180°C."] },
     { id: 303, t: "Salade de Fruits", mood: "healthy", cat: "dessert", price: "2", time: "10", cal: "100", em: "🍓", i: ["Fraises", "Kiwi", "Banane", "Jus Citron", "Menthe"], s: ["Couper les fruits.", "Arroser de jus.", "Ciseler la menthe."] },
