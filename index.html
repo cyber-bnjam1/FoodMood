@@ -3,11 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FoodMood Ultimate</title>
+    <title>FoodMood</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#FAFAFA">
+    
     <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="icon.png">
     <link rel="apple-touch-icon" href="icon.png">
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -44,9 +47,13 @@
         .nav-item.active { color: #EA580C; transform: translateY(-2px); }
         .nav-item.active i { transform: scale(1.1); }
         .cat-filter.active { background-color: #18181b; color: white; border-color: transparent; }
+        .tag-select.active { background-color: #F97316; color: white; border-color: transparent; }
 
         .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
         @keyframes shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
+        
+        /* Badges Grayscale */
+        .badge-locked { filter: grayscale(100%); opacity: 0.5; }
         
         ::-webkit-scrollbar { width: 0; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -60,7 +67,10 @@
                 <p class="text-gray-400 text-xs font-bold uppercase tracking-wider">Bienvenue Chef</p>
                 <h1 class="text-3xl font-black text-gray-900">FoodMood</h1>
             </div>
-            <div class="flex gap-3">
+            <div class="flex gap-2">
+                <button onclick="openBadges()" class="w-10 h-10 bg-yellow-100 rounded-full shadow-lg flex items-center justify-center text-yellow-600 active:scale-95 transition">
+                    <i class="fas fa-trophy"></i>
+                </button>
                 <button onclick="toggleSettings()" class="w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center text-gray-600 active:scale-95 transition">
                     <i class="fas fa-cog"></i>
                 </button>
@@ -79,9 +89,9 @@
                 <span id="user-recipes-count" class="text-2xl font-black text-blue-600">--</span>
                 <span class="text-[10px] uppercase font-bold text-blue-800/60">Créations</span>
             </div>
-            <div class="bg-red-100 px-4 py-3 rounded-2xl flex flex-col min-w-[100px] flex-shrink-0">
-                <span id="fav-count" class="text-2xl font-black text-red-500">--</span>
-                <span class="text-[10px] uppercase font-bold text-red-800/60">Favoris</span>
+            <div class="bg-purple-100 px-4 py-3 rounded-2xl flex flex-col min-w-[100px] flex-shrink-0">
+                <span id="badge-count" class="text-2xl font-black text-purple-600">--</span>
+                <span class="text-[10px] uppercase font-bold text-purple-800/60">Badges</span>
             </div>
         </div>
 
@@ -130,12 +140,15 @@
                 <i class="fas fa-heart"></i>
             </button>
         </div>
-        <div class="flex gap-2 mb-4 overflow-x-auto pb-2 no-scrollbar">
+        <div class="flex gap-2 mb-2 overflow-x-auto pb-2 no-scrollbar">
             <button onclick="setCategoryFilter('all')" class="cat-filter active px-4 py-2 rounded-full text-xs font-bold bg-white border border-gray-200 text-gray-500 whitespace-nowrap transition" data-cat="all">Tout</button>
             <button onclick="setCategoryFilter('starter')" class="cat-filter px-4 py-2 rounded-full text-xs font-bold bg-white border border-gray-200 text-gray-500 whitespace-nowrap transition" data-cat="starter">🥕 Entrées</button>
             <button onclick="setCategoryFilter('main')" class="cat-filter px-4 py-2 rounded-full text-xs font-bold bg-white border border-gray-200 text-gray-500 whitespace-nowrap transition" data-cat="main">🍗 Plats</button>
             <button onclick="setCategoryFilter('dessert')" class="cat-filter px-4 py-2 rounded-full text-xs font-bold bg-white border border-gray-200 text-gray-500 whitespace-nowrap transition" data-cat="dessert">🍰 Desserts</button>
         </div>
+        <div id="cookbook-tags-filter" class="flex gap-2 mb-4 overflow-x-auto pb-2 no-scrollbar border-b border-gray-100">
+            </div>
+
         <div class="bg-white p-2 rounded-2xl shadow-sm mb-6 flex items-center gap-3 border border-gray-100">
             <i class="fas fa-search text-gray-400 ml-3"></i>
             <input type="text" id="search-input" onkeyup="filterCookbook()" placeholder="Rechercher..." class="w-full h-10 outline-none text-sm bg-transparent">
@@ -182,9 +195,17 @@
             </div>
         </div>
         <div class="flex-1 flex flex-col justify-center">
+            
+            <div id="season-alert" class="hidden bg-orange-100 border border-orange-200 text-orange-800 text-xs font-bold p-3 rounded-xl mb-4 flex items-center gap-2">
+                <i class="fas fa-leaf"></i> <span>Attention, certains ingrédients ne sont pas de saison !</span>
+            </div>
+
             <div id="result-card" class="card p-6 flex flex-col items-center text-center relative overflow-hidden transition-all duration-300">
                 <span id="res-emoji" class="text-6xl mb-4 block drop-shadow-xl">🥘</span>
                 <h2 id="res-title" class="text-2xl font-black text-gray-900 leading-tight mb-2">...</h2>
+                
+                <div id="res-tags-list" class="flex flex-wrap justify-center gap-1 mb-3"></div>
+
                 <div class="flex gap-3 justify-center mt-2 mb-4">
                     <span class="bg-gray-100 px-3 py-1 rounded-lg text-xs font-bold text-gray-600 flex items-center gap-1"><i class="far fa-clock"></i> <span id="res-time">--</span></span>
                     <span class="bg-gray-100 px-3 py-1 rounded-lg text-xs font-bold text-gray-600 flex items-center gap-1"><i class="fas fa-fire"></i> <span id="res-cal">--</span></span>
@@ -254,6 +275,12 @@
                 <label class="text-[10px] uppercase font-bold text-gray-400">Nom du plat</label>
                 <input type="text" id="add-title" placeholder="Ex: Tarte aux Pommes" class="w-full text-xl font-bold outline-none mt-1 bg-transparent">
             </div>
+
+            <div class="bg-white p-4 rounded-2xl shadow-sm">
+                <label class="text-[10px] uppercase font-bold text-gray-400 mb-2 block">Mes Tags</label>
+                <div id="add-tags-container" class="flex flex-wrap gap-2">
+                    </div>
+            </div>
             
             <div class="grid grid-cols-2 gap-4">
                  <div class="bg-white p-4 rounded-2xl shadow-sm">
@@ -266,7 +293,7 @@
                         </select>
                     </div>
                 </div>
-                <div class="bg-white p-4 rounded-2xl shadow-sm">
+                 <div class="bg-white p-4 rounded-2xl shadow-sm">
                     <label class="text-[10px] uppercase font-bold text-gray-400">Prix</label>
                     <div class="flex gap-2 mt-2">
                         <select id="add-price" class="w-full bg-gray-50 font-bold text-sm rounded-xl p-3 outline-none">
@@ -324,31 +351,52 @@
         <div class="bg-white p-6 rounded-3xl w-full max-w-sm text-center">
             <h2 class="text-xl font-black mb-4">Importer du Web</h2>
             <p class="text-sm text-gray-500 mb-6">Colle l'adresse (URL) d'une recette (Marmiton, CuisineAZ, etc.)</p>
-            
             <input type="text" id="import-url" placeholder="https://..." class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none mb-4 shadow-inner">
-            
             <button onclick="fetchRecipeFromUrl()" id="btn-import-action" class="w-full bg-purple-600 text-white py-3 rounded-xl font-bold mb-3 flex items-center justify-center gap-2">
                 <i class="fas fa-magic"></i> Importer
             </button>
-            
             <button onclick="toggleImportModal()" class="text-sm font-bold text-gray-400 mt-2">Annuler</button>
         </div>
     </div>
 
-    <div id="settings-modal" class="fixed inset-0 bg-black/80 backdrop-blur hidden z-50 flex items-center justify-center p-6">
-        <div class="bg-white p-6 rounded-3xl w-full max-w-sm text-center">
-            <h2 class="text-xl font-black mb-4">Données</h2>
-            <p class="text-sm text-gray-500 mb-6">Sauvegarde tes recettes.</p>
-            <button onclick="exportData()" class="w-full bg-gray-100 text-gray-800 py-3 rounded-xl font-bold mb-3 flex items-center justify-center gap-2">
+    <div id="badges-modal" class="fixed inset-0 bg-black/80 backdrop-blur hidden z-50 flex flex-col items-center justify-center p-6">
+        <div class="bg-white p-6 rounded-3xl w-full max-w-sm max-h-[80vh] flex flex-col">
+            <h2 class="text-xl font-black mb-4 text-center">Mes Trophées</h2>
+            <p class="text-sm text-gray-500 mb-4 text-center">Cuisine pour débloquer des badges !</p>
+            
+            <div id="badges-list" class="flex-1 overflow-y-auto grid grid-cols-3 gap-3 pb-4">
+                </div>
+            
+            <button onclick="document.getElementById('badges-modal').classList.add('hidden')" class="w-full bg-gray-100 text-gray-800 py-3 rounded-xl font-bold mt-2">Fermer</button>
+        </div>
+    </div>
+
+    <div id="settings-modal" class="fixed inset-0 bg-black/80 backdrop-blur hidden z-50 flex flex-col items-center justify-center p-6">
+        <div class="bg-white p-6 rounded-3xl w-full max-w-sm max-h-[80vh] overflow-y-auto">
+            <h2 class="text-xl font-black mb-4 text-center">Réglages</h2>
+            
+            <div class="mb-6 border-b border-gray-100 pb-6">
+                <h3 class="font-bold mb-2">🏷️ Mes Tags Perso</h3>
+                <div class="flex gap-2 mb-2">
+                    <input type="text" id="new-tag-input" placeholder="Nouveau tag..." class="flex-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none">
+                    <button onclick="addNewTag()" class="bg-brand text-white px-3 rounded-lg"><i class="fas fa-plus"></i></button>
+                </div>
+                <div id="settings-tags-list" class="flex flex-wrap gap-2">
+                    </div>
+            </div>
+
+            <h3 class="font-bold mb-2">💾 Données</h3>
+            <button onclick="exportData()" class="w-full bg-gray-100 text-gray-800 py-3 rounded-xl font-bold mb-2 flex items-center justify-center gap-2">
                 <i class="fas fa-download"></i> Sauvegarder
             </button>
-            <div class="relative w-full">
-                <button class="w-full bg-gray-100 text-gray-800 py-3 rounded-xl font-bold mb-3 flex items-center justify-center gap-2">
+            <div class="relative w-full mb-4">
+                <button class="w-full bg-gray-100 text-gray-800 py-3 rounded-xl font-bold flex items-center justify-center gap-2">
                     <i class="fas fa-upload"></i> Restaurer
                 </button>
                 <input type="file" id="import-file" onchange="importData(this)" class="absolute inset-0 opacity-0 cursor-pointer">
             </div>
-            <button onclick="toggleSettings()" class="text-sm font-bold text-gray-400 mt-2">Fermer</button>
+
+            <button onclick="toggleSettings()" class="text-sm font-bold text-gray-400 mt-2 w-full">Fermer</button>
         </div>
     </div>
 
@@ -367,6 +415,7 @@
         </button>
     </nav>
     
+    <script src="recettes.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
