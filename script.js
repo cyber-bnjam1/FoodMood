@@ -1,16 +1,28 @@
-// --- DONNÉES PAR DÉFAUT ---
-// Note: price (1=Cheap, 2=Mid, 3=Exp)
-const DEFAULT_RECIPES = [
-    { id: 1, t: "Pâtes Cacio e Pepe", mood: "fast", cat: "main", price: "1", time: "12", cal: "450", em: "🍝", i: ["200g Spaghetti", "100g Pecorino", "Poivre noir", "Eau de cuisson"], s: ["Cuire les pâtes al dente.", "Mélanger fromage et eau de cuisson.", "Poivrer généreusement."] },
-    { id: 2, t: "Omelette Complète", mood: "fast", cat: "main", price: "1", time: "8", cal: "320", em: "🍳", i: ["3 Oeufs", "50g Fromage râpé", "Ciboulette", "2 Champignons"], s: ["Battre les oeufs.", "Cuire à feu moyen.", "Ajouter la garniture.", "Plier en deux."] },
-    { id: 3, t: "Wrap Thon Mayo", mood: "fast", cat: "main", price: "1", time: "5", cal: "380", em: "🌯", i: ["1 Tortilla", "1 petite boite Thon", "1cs Mayonnaise", "1cs Maïs", "Salade"], s: ["Mélanger thon et mayo.", "Etaler sur la tortilla.", "Ajouter les légumes.", "Rouler serré."] },
-    { id: 4, t: "Salade César", mood: "healthy", cat: "main", price: "2", time: "15", cal: "350", em: "🥗", i: ["100g Poulet grillé", "Salade Romaine", "20g Parmesan", "Croutons", "Sauce César"], s: ["Couper le poulet.", "Laver la salade.", "Tout mélanger.", "Ajouter la sauce."] },
-    { id: 5, t: "Poké Bowl Saumon", mood: "healthy", cat: "main", price: "3", time: "20", cal: "450", em: "🍣", i: ["150g Riz vinaigré", "100g Saumon cru", "1/2 Avocat", "Concombre", "Sésame"], s: ["Cuire le riz.", "Couper le poisson en dés.", "Disposer joliment dans un bol."] },
-    { id: 6, t: "Burger Maison", mood: "comfort", cat: "main", price: "2", time: "20", cal: "650", em: "🍔", i: ["1 Pain Bun", "1 Steak haché", "1 tr Cheddar", "1/2 Oignon", "Sauce Burger"], s: ["Toaster le pain.", "Cuire le steak.", "Fondre le cheddar.", "Monter le burger."] },
-    { id: 7, t: "Pizza Tortilla", mood: "comfort", cat: "main", price: "1", time: "10", cal: "400", em: "🍕", i: ["1 Tortilla", "3cs Coulis tomate", "50g Mozzarella", "Origan"], s: ["Mettre la sauce sur la tortilla.", "Ajouter fromage.", "Cuire 10min au four."] },
-    { id: 8, t: "Velouté Potimarron", mood: "healthy", cat: "starter", price: "1", time: "25", cal: "150", em: "🥣", i: ["1/2 Potimarron", "1 Oignon", "Bouillon", "Crème"], s: ["Cuire légumes.", "Mixer.", "Assaisonner."] },
-    { id: 9, t: "Fondant Chocolat", mood: "comfort", cat: "dessert", price: "1", time: "15", cal: "400", em: "🍰", i: ["100g Chocolat", "80g Beurre", "2 Oeufs", "40g Sucre", "30g Farine"], s: ["Fondre choco/beurre.", "Mélanger tout.", "Cuire 10min 200°C."] },
-    { id: 10, t: "Salade de Fruits", mood: "healthy", cat: "dessert", price: "2", time: "10", cal: "100", em: "🥝", i: ["Pomme", "Banane", "Kiwi", "Jus orange"], s: ["Couper.", "Mélanger."] }
+// --- SCRIPT.JS ---
+// Note: RECIPES_DATA chargé depuis recettes.js
+
+// CONFIG BADGES (20+ Badges)
+const BADGES_DEF = [
+    { id: 'first_cook', icon: '🐣', title: 'Premier Pas', desc: 'Cuisiner 1 recette', cond: (s) => s.total >= 1 },
+    { id: 'chef_5', icon: '👨‍🍳', title: 'Apprenti', desc: 'Cuisiner 5 recettes', cond: (s) => s.total >= 5 },
+    { id: 'chef_20', icon: '🔥', title: 'Sous-Chef', desc: 'Cuisiner 20 recettes', cond: (s) => s.total >= 20 },
+    { id: 'chef_50', icon: '👑', title: 'Chef Étoilé', desc: 'Cuisiner 50 recettes', cond: (s) => s.total >= 50 },
+    { id: 'healthy_10', icon: '🥗', title: 'Healthy Life', desc: '10 recettes Healthy', cond: (s) => s.healthy >= 10 },
+    { id: 'fat_10', icon: '🍔', title: 'Gros Bidon', desc: '10 recettes Plaisir', cond: (s) => s.comfort >= 10 },
+    { id: 'fast_10', icon: '⚡', title: 'Speedy', desc: '10 recettes Rapides', cond: (s) => s.fast >= 10 },
+    { id: 'sweet_10', icon: '🧁', title: 'Bec Sucré', desc: '10 Pâtisseries', cond: (s) => s.patisserie >= 10 },
+    { id: 'cheap_10', icon: '💸', title: 'Économe', desc: '10 recettes Pas Chères', cond: (s) => s.cheap >= 10 },
+    { id: 'rich_5', icon: '💎', title: 'Luxe', desc: '5 recettes Chics', cond: (s) => s.exp >= 5 },
+    { id: 'starter_5', icon: '🥕', title: 'Mise en bouche', desc: '5 Entrées', cond: (s) => s.starter >= 5 },
+    { id: 'dessert_10', icon: '🍰', title: 'Gourmand', desc: '10 Desserts', cond: (s) => s.dessert >= 10 },
+    { id: 'night_owl', icon: '🦉', title: 'Oiseau de Nuit', desc: 'Cuisiner après 22h', cond: (s) => s.night >= 1 },
+    { id: 'morning', icon: '☀️', title: 'Lève-tôt', desc: 'Cuisiner avant 10h', cond: (s) => s.morning >= 1 },
+    { id: 'weekend', icon: '🎉', title: 'Dimanche', desc: 'Cuisiner le weekend', cond: (s) => s.weekend >= 5 },
+    { id: 'importer', icon: '🌍', title: 'Explorateur', desc: 'Importer 1 recette Web', cond: (s) => s.imported >= 1 },
+    { id: 'creator', icon: '✍️', title: 'Créateur', desc: 'Créer 5 recettes perso', cond: (s) => s.created >= 5 },
+    { id: 'season', icon: '🍂', title: 'De Saison', desc: 'Cuisiner 5 fois de saison', cond: (s) => s.seasonal >= 5 },
+    { id: 'variety', icon: '🌈', title: 'Polyvalent', desc: 'Cuisiner 1 de chaque Mood', cond: (s) => s.healthy>0 && s.fast>0 && s.comfort>0 && s.patisserie>0 },
+    { id: 'master', icon: '🏆', title: 'Légende', desc: '100 recettes cuisinées', cond: (s) => s.total >= 100 }
 ];
 
 // STATES
@@ -18,44 +30,149 @@ let allRecipes = [];
 let favorites = [];
 let shoppingList = [];
 let fridgeIngredients = []; 
+let userTags = []; // Tags perso
+let userStats = {}; // Stats pour badges
 let currentRecipe = null;
 let activeMood = '';
 let editingRecipeId = null;
 let currentPortion = 2;
 let activeCategoryFilter = 'all';
+let activeTagFilter = null; // Filtre tag en cours
 let wakeLock = null; 
 
 // --- INIT ---
 document.addEventListener('DOMContentLoaded', () => { initApp(); });
-async function initApp() { await loadRecipes(); loadFavorites(); loadShoppingList(); renderShoppingList(); }
+async function initApp() { 
+    loadSettings();
+    await loadRecipes(); 
+    loadFavorites(); 
+    loadShoppingList(); 
+    renderShoppingList(); 
+    updateStatsUI();
+}
+
+function loadSettings() {
+    userTags = JSON.parse(localStorage.getItem('foodmood_tags') || '["Végétarien", "Sans Gluten", "Épicé"]');
+    userStats = JSON.parse(localStorage.getItem('foodmood_stats') || '{"total":0,"healthy":0,"fast":0,"comfort":0,"patisserie":0,"cheap":0,"exp":0,"starter":0,"dessert":0,"night":0,"morning":0,"weekend":0,"imported":0,"created":0,"seasonal":0}');
+    renderSettingsTags();
+}
 
 async function loadRecipes() {
     let externalRecipes = []; let dessertRecipes = [];
-    // Chargement Recettes Générales
     try { const r = await fetch('data/recettes.json'); if (r.ok) externalRecipes = await r.json(); } catch (e) {}
-    // Chargement Desserts
-    try { 
-        const r = await fetch('data/desserts.json'); 
-        if (r.ok) { 
-            const d = await r.json(); 
-            // On force le mood et la catégorie pour les desserts
-            dessertRecipes = d.map(x => ({...x, mood: 'patisserie', cat: 'dessert', price: "2"})); 
-        } 
-    } catch (e) {}
-    
+    try { const r = await fetch('data/desserts.json'); if (r.ok) { const d = await r.json(); dessertRecipes = d.map(x => ({...x, mood: 'patisserie', cat: 'dessert', price: "2"})); } } catch (e) {}
     const userLocalRecipes = JSON.parse(localStorage.getItem('foodmood_user_recipes') || '[]');
-    allRecipes = [...DEFAULT_RECIPES, ...externalRecipes, ...dessertRecipes, ...userLocalRecipes];
-    updateStats();
+    const baseRecipes = (typeof RECIPES_DATA !== 'undefined') ? RECIPES_DATA : [];
+    allRecipes = [...baseRecipes, ...externalRecipes, ...dessertRecipes, ...userLocalRecipes];
+    updateStatsUI();
+}
+
+// --- GESTION DES TAGS PERSO ---
+function addNewTag() {
+    const input = document.getElementById('new-tag-input');
+    const val = input.value.trim();
+    if(val && !userTags.includes(val)) {
+        userTags.push(val);
+        localStorage.setItem('foodmood_tags', JSON.stringify(userTags));
+        input.value = "";
+        renderSettingsTags();
+    }
+}
+function removeTag(tag) {
+    userTags = userTags.filter(t => t !== tag);
+    localStorage.setItem('foodmood_tags', JSON.stringify(userTags));
+    renderSettingsTags();
+}
+function renderSettingsTags() {
+    const div = document.getElementById('settings-tags-list');
+    div.innerHTML = "";
+    userTags.forEach(t => {
+        div.innerHTML += `<div class="bg-gray-100 px-3 py-1 rounded-full text-sm flex items-center gap-2">${t} <button onclick="removeTag('${t}')" class="text-red-500"><i class="fas fa-times"></i></button></div>`;
+    });
+}
+function renderTagsInForm(selectedTags = []) {
+    const div = document.getElementById('add-tags-container');
+    div.innerHTML = "";
+    userTags.forEach(t => {
+        const isSelected = selectedTags.includes(t);
+        div.innerHTML += `<label class="cursor-pointer select-none bg-white border ${isSelected?'border-brand bg-orange-50 text-brand':'border-gray-200 text-gray-500'} px-3 py-1 rounded-full text-xs font-bold transition"><input type="checkbox" value="${t}" class="hidden tag-checkbox" ${isSelected?'checked':''} onchange="this.parentElement.classList.toggle('border-brand');this.parentElement.classList.toggle('text-brand');this.parentElement.classList.toggle('bg-orange-50')">${t}</label>`;
+    });
+}
+
+// --- SAISONNALITÉ ---
+function checkSeasonality(ingredients) {
+    const month = new Date().getMonth(); // 0-11
+    // Liste simplifiée d'ingrédients "problématiques" hors saison
+    // Hiver (Nov-Mars): Pas de Tomate, Courgette, Aubergine, Fraise, Melon, Pêche
+    const badWinter = ['tomate', 'courgette', 'aubergine', 'fraise', 'melon', 'pêche', 'concombre', 'poivron'];
+    const isWinter = (month >= 10 || month <= 2);
+    
+    if (isWinter) {
+        return ingredients.some(ing => badWinter.some(bad => ing.toLowerCase().includes(bad)));
+    }
+    return false;
+}
+
+// --- BADGES SYSTEM ---
+function openBadges() {
+    const list = document.getElementById('badges-list');
+    list.innerHTML = "";
+    let unlockedCount = 0;
+    
+    BADGES_DEF.forEach(b => {
+        const unlocked = b.cond(userStats);
+        if(unlocked) unlockedCount++;
+        
+        // Clic sur badge pour voir détails
+        list.innerHTML += `
+        <div onclick="alert('${b.title} : ${b.desc}')" class="flex flex-col items-center justify-center p-3 rounded-2xl bg-gray-50 border ${unlocked ? 'border-purple-200 bg-purple-50' : 'border-gray-100'} ${unlocked ? '' : 'badge-locked'} cursor-pointer">
+            <div class="text-3xl mb-1">${b.icon}</div>
+            <div class="text-[10px] font-bold text-center leading-tight ${unlocked ? 'text-purple-700' : 'text-gray-400'}">${b.title}</div>
+        </div>`;
+    });
+    
+    document.getElementById('badge-count').textContent = unlockedCount;
+    document.getElementById('badges-modal').classList.remove('hidden');
+}
+
+function updateStatsOnClick() {
+    if(!currentRecipe) return;
+    
+    // Incrémente Stats
+    userStats.total++;
+    if(currentRecipe.mood === 'healthy') userStats.healthy++;
+    if(currentRecipe.mood === 'fast') userStats.fast++;
+    if(currentRecipe.mood === 'comfort') userStats.comfort++;
+    if(currentRecipe.mood === 'patisserie') userStats.patisserie++;
+    if(currentRecipe.cat === 'starter') userStats.starter++;
+    if(currentRecipe.cat === 'dessert') userStats.dessert++;
+    if(currentRecipe.price === '1') userStats.cheap++;
+    if(currentRecipe.price === '3') userStats.exp++;
+    if(currentRecipe.id > 1000) userStats.created++; // ID > 1000 = perso
+    
+    const hour = new Date().getHours();
+    if(hour < 10) userStats.morning++;
+    if(hour >= 22) userStats.night++;
+    const day = new Date().getDay();
+    if(day === 0 || day === 6) userStats.weekend++;
+
+    // Check saison
+    if(!checkSeasonality(currentRecipe.i)) userStats.seasonal++;
+
+    localStorage.setItem('foodmood_stats', JSON.stringify(userStats));
+    
+    // Check nouveaux badges débloqués (optionnel: afficher notif)
+    updateStatsUI();
 }
 
 // --- FAVORIS ---
-function loadFavorites() { favorites = JSON.parse(localStorage.getItem('foodmood_favorites') || '[]'); updateStats(); }
+function loadFavorites() { favorites = JSON.parse(localStorage.getItem('foodmood_favorites') || '[]'); updateStatsUI(); }
 function toggleFavorite() {
     if(!currentRecipe) return;
     const idx = favorites.indexOf(currentRecipe.id);
     if(idx === -1) { favorites.push(currentRecipe.id); } else { favorites.splice(idx, 1); }
     localStorage.setItem('foodmood_favorites', JSON.stringify(favorites));
-    updateFavIcon(); updateStats();
+    updateFavIcon(); updateStatsUI();
 }
 function updateFavIcon() {
     const btn = document.getElementById('btn-fav');
@@ -67,13 +184,19 @@ function toggleFavFilter() {
     btn.classList.toggle('bg-red-500'); btn.classList.toggle('text-white');
     filterCookbook();
 }
-function updateStats() {
+function updateStatsUI() {
+    // Calcul badges unlocked
+    let badgesUnlocked = 0;
+    BADGES_DEF.forEach(b => { if(b.cond(userStats)) badgesUnlocked++; });
+
+    const baseCount = (typeof RECIPES_DATA !== 'undefined') ? RECIPES_DATA.length : 0;
     document.getElementById('total-recipes').textContent = allRecipes.length;
-    document.getElementById('user-recipes-count').textContent = allRecipes.length - DEFAULT_RECIPES.length;
+    document.getElementById('user-recipes-count').textContent = allRecipes.length - baseCount;
     document.getElementById('fav-count').textContent = favorites.length;
+    document.getElementById('badge-count').textContent = badgesUnlocked;
 }
 
-// --- FRIDGE MODE (Recherche par ingrédients) ---
+// --- FRIDGE MODE ---
 function addFridgeItem() {
     const input = document.getElementById('fridge-input'); const val = input.value.trim();
     if(val && !fridgeIngredients.includes(val)) { fridgeIngredients.push(val); input.value = ""; renderFridgeTags(); }
@@ -86,17 +209,16 @@ function renderFridgeTags() {
 function searchFridge() {
     const resultsDiv = document.getElementById('fridge-results'); resultsDiv.innerHTML = "";
     if(fridgeIngredients.length === 0) { resultsDiv.innerHTML = `<div class="text-center text-gray-400">Ajoute des ingrédients !</div>`; return; }
-    // Recherche si AU MOINS UN ingrédient correspond
     const matches = allRecipes.filter(r => r.i.some(recipeIng => fridgeIngredients.some(fridgeWord => recipeIng.toLowerCase().includes(fridgeWord.toLowerCase()))));
     if(matches.length === 0) { resultsDiv.innerHTML = `<div class="text-center text-gray-400">Aucune recette trouvée... 🍳</div>`; } 
     else { renderCookbookList(matches, 'fridge-results'); }
 }
 
-// --- WAKE LOCK (No-Sleep en cuisine) ---
+// --- WAKE LOCK ---
 async function requestWakeLock() { try { if ('wakeLock' in navigator) { wakeLock = await navigator.wakeLock.request('screen'); } } catch (err) {} }
 async function releaseWakeLock() { if (wakeLock !== null) { await wakeLock.release(); wakeLock = null; } }
 
-// --- SMART SHOPPING (Tri par rayon) ---
+// --- SMART SHOPPING ---
 function loadShoppingList() { shoppingList = JSON.parse(localStorage.getItem('foodmood_shopping') || '[]'); }
 function saveShoppingList() { localStorage.setItem('foodmood_shopping', JSON.stringify(shoppingList)); renderShoppingList(); }
 function addShopItemManually() {
@@ -111,8 +233,6 @@ function addAllToShop() {
 }
 function toggleShopItem(idx) { shoppingList[idx].done = !shoppingList[idx].done; saveShoppingList(); }
 function clearShoppingList() { shoppingList = []; saveShoppingList(); }
-
-// Logique de détection de rayon
 function getCategoryForIngredient(name) {
     const n = name.toLowerCase();
     const cats = {
@@ -126,21 +246,16 @@ function getCategoryForIngredient(name) {
     }
     return '🛒 Divers';
 }
-
 function renderShoppingList() {
     const container = document.getElementById('shopping-list'); container.innerHTML = "";
     if(shoppingList.length === 0) { container.innerHTML = "<div class='text-center text-gray-400 mt-10'>Panier vide 🛒</div>"; return; }
-    
-    // Groupement par catégories
     const groups = {};
     shoppingList.forEach((item, idx) => {
         const cat = getCategoryForIngredient(item.t);
         if(!groups[cat]) groups[cat] = [];
         groups[cat].push({ ...item, originalIdx: idx });
     });
-
-    const sortedCats = Object.keys(groups).sort();
-    sortedCats.forEach(cat => {
+    Object.keys(groups).sort().forEach(cat => {
         container.innerHTML += `<h3 class="text-xs font-black text-gray-400 uppercase tracking-widest mt-4 mb-2 ml-1">${cat}</h3>`;
         groups[cat].forEach(item => {
             container.innerHTML += `<div onclick="toggleShopItem(${item.originalIdx})" class="bg-white p-3 rounded-xl border border-gray-100 flex items-center gap-3 active:scale-[0.98] transition cursor-pointer mb-2"><div class="w-5 h-5 rounded border ${item.done?'bg-brand border-brand':'border-gray-300'} flex items-center justify-center">${item.done?'<i class="fas fa-check text-white text-xs"></i>':''}</div><span class="${item.done?'line-through text-gray-400':'text-gray-800'} font-medium">${item.t}</span></div>`;
@@ -186,7 +301,6 @@ function navigate(viewName) {
     if(viewName === 'home') document.getElementById('nav-home').classList.add('active');
     if(viewName === 'cookbook') document.getElementById('nav-book').classList.add('active');
     if(viewName === 'shop') document.getElementById('nav-shop').classList.add('active');
-    // Gestion écran allumé
     if(viewName === 'cook') { requestWakeLock(); } else { releaseWakeLock(); }
 }
 function findRecipe(mood) { activeMood = mood; rollDice(); navigate('result'); }
@@ -209,10 +323,20 @@ function renderResult(r) {
     document.getElementById('res-time').textContent = r.time + ' min';
     document.getElementById('res-cal').textContent = r.cal + ' kcal';
     
-    // Affichage Prix
     const priceEl = document.getElementById('res-price');
     const p = r.price || "2";
     priceEl.textContent = p === "1" ? "€" : (p === "2" ? "€€" : "€€€");
+
+    // Affichage des tags sur la carte
+    const tagsDiv = document.getElementById('res-tags-list');
+    tagsDiv.innerHTML = "";
+    if(r.tags && Array.isArray(r.tags)) {
+        r.tags.forEach(t => tagsDiv.innerHTML += `<span class="text-[9px] bg-gray-100 px-2 py-0.5 rounded text-gray-500 font-bold">${t}</span>`);
+    }
+
+    // Alerte Saison
+    const alertSeason = document.getElementById('season-alert');
+    if(checkSeasonality(r.i)) { alertSeason.classList.remove('hidden'); } else { alertSeason.classList.add('hidden'); }
     
     renderIngredientsList();
     updateFavIcon();
@@ -224,7 +348,29 @@ function renderResult(r) {
 }
 
 // --- COOKBOOK & FILTERS ---
-function openCookbook() { setCategoryFilter('all'); navigate('cookbook'); }
+function openCookbook() { 
+    setCategoryFilter('all'); 
+    renderCookbookTagsFilter();
+    navigate('cookbook'); 
+}
+
+function renderCookbookTagsFilter() {
+    const div = document.getElementById('cookbook-tags-filter');
+    div.innerHTML = "";
+    if(userTags.length === 0) { div.style.display = 'none'; return; }
+    div.style.display = 'flex';
+    
+    userTags.forEach(t => {
+        const isActive = activeTagFilter === t;
+        div.innerHTML += `<button onclick="toggleTagFilter('${t}')" class="tag-select flex-shrink-0 px-3 py-1 rounded-full text-[10px] font-bold border transition ${isActive ? 'active' : 'bg-white border-gray-200 text-gray-500'}">${t}</button>`;
+    });
+}
+function toggleTagFilter(tag) {
+    if(activeTagFilter === tag) activeTagFilter = null; else activeTagFilter = tag;
+    renderCookbookTagsFilter();
+    filterCookbook();
+}
+
 function setCategoryFilter(cat) {
     activeCategoryFilter = cat;
     document.querySelectorAll('.cat-filter').forEach(btn => {
@@ -241,18 +387,26 @@ function setCategoryFilter(cat) {
 function filterCookbook() {
     const term = document.getElementById('search-input').value.toLowerCase();
     const onlyFav = document.getElementById('btn-filter-fav').classList.contains('bg-red-500');
+    
     const filtered = allRecipes.filter(r => {
         const matchText = r.t.toLowerCase().includes(term) || r.mood.includes(term);
         const matchFav = onlyFav ? favorites.includes(r.id) : true;
         const currentCat = r.cat || 'main'; 
         const matchCat = activeCategoryFilter === 'all' ? true : currentCat === activeCategoryFilter;
-        return matchText && matchFav && matchCat;
+        
+        // Filtre Tag Perso
+        let matchTag = true;
+        if(activeTagFilter) {
+            matchTag = r.tags && r.tags.includes(activeTagFilter);
+        }
+
+        return matchText && matchFav && matchCat && matchTag;
     });
     renderCookbookList(filtered, 'cookbook-list');
 }
 function renderCookbookList(list, targetId) {
     const container = document.getElementById(targetId); container.innerHTML = "";
-    if (list.length === 0) { return; }
+    if (list.length === 0) { container.innerHTML = "<div class='text-center text-gray-400 mt-10'>Rien ici...</div>"; return; }
     list.sort((a, b) => b.id - a.id);
     list.forEach(r => {
         let moodIcon = '⚡️'; let moodColor = 'bg-gray-100 text-gray-700';
@@ -284,7 +438,7 @@ function renderCookbookList(list, targetId) {
 }
 
 // --- ADD/EDIT ---
-function openAddMode() { editingRecipeId = null; document.getElementById('form-title').textContent="Nouvelle Recette"; resetForm(); navigate('add'); }
+function openAddMode() { editingRecipeId = null; document.getElementById('form-title').textContent="Nouvelle Recette"; resetForm(); navigate('add'); renderTagsInForm(); }
 function openEditMode() {
     if(!currentRecipe) return; editingRecipeId = currentRecipe.id;
     document.getElementById('form-title').textContent="Modifier Recette";
@@ -297,10 +451,76 @@ function openEditMode() {
     document.getElementById('add-cal').value = currentRecipe.cal;
     document.getElementById('add-ing').value = currentRecipe.i.join('\n');
     document.getElementById('add-steps').value = (currentRecipe.s||[]).join('\n');
+    
+    // Remplir tags
+    renderTagsInForm(currentRecipe.tags || []);
+    
     navigate('add');
 }
 function cancelEdit() { if(editingRecipeId) navigate('result'); else navigate('home'); resetForm(); editingRecipeId = null; }
 function resetForm() { document.getElementById('add-title').value=""; document.getElementById('add-ing').value=""; document.getElementById('add-steps').value=""; }
+
+function toggleImportModal() { document.getElementById('import-modal').classList.toggle('hidden'); }
+async function fetchRecipeFromUrl() {
+    const url = document.getElementById('import-url').value;
+    const btn = document.getElementById('btn-import-action');
+    if(!url) return;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyse...';
+    btn.disabled = true;
+    try {
+        const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(url);
+        const response = await fetch(proxyUrl);
+        if (!response.ok) throw new Error("Erreur réseau");
+        const html = await response.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, "text/html");
+        let recipeData = null;
+        const scripts = doc.querySelectorAll('script[type="application/ld+json"]');
+        const findRecipeInObject = (obj) => {
+            if (!obj) return null;
+            if (obj['@type'] === 'Recipe') return obj;
+            if (Array.isArray(obj['@graph'])) return obj['@graph'].find(x => x['@type'] === 'Recipe');
+            if (Array.isArray(obj)) return obj.find(x => x['@type'] === 'Recipe');
+            return null;
+        };
+        for (let s of scripts) { try { const json = JSON.parse(s.innerText); const found = findRecipeInObject(json); if (found) { recipeData = found; break; } } catch(e) {} }
+
+        if (recipeData) {
+            document.getElementById('add-title').value = recipeData.name || "";
+            if(Array.isArray(recipeData.recipeIngredient)) document.getElementById('add-ing').value = recipeData.recipeIngredient.join('\n');
+            if(Array.isArray(recipeData.recipeInstructions)) {
+                const steps = recipeData.recipeInstructions.map(s => (s.text || s.name || s).replace(/&nbsp;/g, ' ').trim()).join('\n');
+                document.getElementById('add-steps').value = steps;
+            } else if (typeof recipeData.recipeInstructions === 'string') { document.getElementById('add-steps').value = recipeData.recipeInstructions; }
+            const titleLower = (recipeData.name || "").toLowerCase();
+            let em = '🥘';
+            if(titleLower.includes('gâteau') || titleLower.includes('tarte') || titleLower.includes('sucré')) em = '🍰';
+            if(titleLower.includes('salade')) em = '🥗';
+            if(titleLower.includes('soupe')) em = '🥣';
+            if(titleLower.includes('pizza')) em = '🍕';
+            if(titleLower.includes('burger')) em = '🍔';
+            document.getElementById('add-emoji').value = em;
+            const timeStr = recipeData.totalTime || recipeData.cookTime;
+            if(timeStr) {
+                const hoursMatch = timeStr.match(/(\d+)H/);
+                const minsMatch = timeStr.match(/(\d+)M/);
+                let totalMin = 0;
+                if(hoursMatch) totalMin += parseInt(hoursMatch[1]) * 60;
+                if(minsMatch) totalMin += parseInt(minsMatch[1]);
+                if(totalMin > 0) document.getElementById('add-time').value = totalMin;
+            }
+            // Stats : recette importée
+            userStats.imported++; localStorage.setItem('foodmood_stats', JSON.stringify(userStats)); updateStatsUI();
+            
+            toggleImportModal(); alert("Recette importée !");
+        } else {
+            const h1 = doc.querySelector('h1');
+            if(h1) { document.getElementById('add-title').value = h1.innerText.trim(); toggleImportModal(); alert("Import partiel (Titre uniquement)."); } 
+            else { throw new Error("Format non reconnu"); }
+        }
+    } catch (e) { console.error(e); alert("Impossible d'importer automatiquement."); } finally { btn.innerHTML = originalText; btn.disabled = false; }
+}
 
 function saveRecipe() {
     const title = document.getElementById('add-title').value;
@@ -309,6 +529,10 @@ function saveRecipe() {
     
     let finalId = (editingRecipeId && editingRecipeId < 1000) ? Date.now() : (editingRecipeId ? editingRecipeId : Date.now());
     
+    // Récupérer Tags sélectionnés
+    const selectedTags = [];
+    document.querySelectorAll('.tag-checkbox:checked').forEach(cb => selectedTags.push(cb.value));
+    
     const recipeData = {
         id: finalId, t: title, 
         mood: document.getElementById('add-mood').value, 
@@ -316,7 +540,8 @@ function saveRecipe() {
         price: document.getElementById('add-price').value,
         time: document.getElementById('add-time').value||"20",
         cal: document.getElementById('add-cal').value||"?", em: document.getElementById('add-emoji').value,
-        i: ingText.split('\n').filter(l=>l.trim()!==""), s: document.getElementById('add-steps').value.split('\n').filter(l=>l.trim()!=="")
+        i: ingText.split('\n').filter(l=>l.trim()!==""), s: document.getElementById('add-steps').value.split('\n').filter(l=>l.trim()!==""),
+        tags: selectedTags
     };
 
     let userRecipes = JSON.parse(localStorage.getItem('foodmood_user_recipes') || '[]');
@@ -331,107 +556,6 @@ function saveRecipe() {
     editingRecipeId = null;
 }
 
-// --- IMPORT WEB (CORRIGÉ & ROBUSTE) ---
-function toggleImportModal() { document.getElementById('import-modal').classList.toggle('hidden'); }
-
-async function fetchRecipeFromUrl() {
-    const url = document.getElementById('import-url').value;
-    const btn = document.getElementById('btn-import-action');
-    if(!url) return;
-
-    const originalText = btn.innerHTML;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyse...';
-    btn.disabled = true;
-    
-    try {
-        // Utilisation de corsproxy.io pour contourner les protections
-        const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(url);
-        const response = await fetch(proxyUrl);
-        if (!response.ok) throw new Error("Erreur réseau");
-        
-        const html = await response.text();
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, "text/html");
-        
-        // Recherche du JSON-LD
-        let recipeData = null;
-        const scripts = doc.querySelectorAll('script[type="application/ld+json"]');
-        
-        const findRecipeInObject = (obj) => {
-            if (!obj) return null;
-            if (obj['@type'] === 'Recipe') return obj;
-            if (Array.isArray(obj['@graph'])) return obj['@graph'].find(x => x['@type'] === 'Recipe');
-            if (Array.isArray(obj)) return obj.find(x => x['@type'] === 'Recipe');
-            return null;
-        };
-
-        for (let s of scripts) {
-            try {
-                const json = JSON.parse(s.innerText);
-                const found = findRecipeInObject(json);
-                if (found) { recipeData = found; break; }
-            } catch(e) {}
-        }
-
-        if (recipeData) {
-            document.getElementById('add-title').value = recipeData.name || "";
-            
-            // Ingrédients
-            if(Array.isArray(recipeData.recipeIngredient)) {
-                document.getElementById('add-ing').value = recipeData.recipeIngredient.join('\n');
-            }
-
-            // Étapes
-            if(Array.isArray(recipeData.recipeInstructions)) {
-                const steps = recipeData.recipeInstructions.map(s => (s.text || s.name || s).replace(/&nbsp;/g, ' ').trim()).join('\n');
-                document.getElementById('add-steps').value = steps;
-            } else if (typeof recipeData.recipeInstructions === 'string') {
-                document.getElementById('add-steps').value = recipeData.recipeInstructions;
-            }
-
-            // Emoji
-            const titleLower = (recipeData.name || "").toLowerCase();
-            let em = '🥘';
-            if(titleLower.includes('gâteau') || titleLower.includes('tarte') || titleLower.includes('sucré')) em = '🍰';
-            if(titleLower.includes('salade')) em = '🥗';
-            if(titleLower.includes('soupe')) em = '🥣';
-            if(titleLower.includes('pizza')) em = '🍕';
-            if(titleLower.includes('burger')) em = '🍔';
-            document.getElementById('add-emoji').value = em;
-
-            // Temps (ISO format PT20M)
-            const timeStr = recipeData.totalTime || recipeData.cookTime;
-            if(timeStr) {
-                const hoursMatch = timeStr.match(/(\d+)H/);
-                const minsMatch = timeStr.match(/(\d+)M/);
-                let totalMin = 0;
-                if(hoursMatch) totalMin += parseInt(hoursMatch[1]) * 60;
-                if(minsMatch) totalMin += parseInt(minsMatch[1]);
-                if(totalMin > 0) document.getElementById('add-time').value = totalMin;
-            }
-
-            toggleImportModal();
-            alert("Recette importée !");
-        } else {
-            // Fallback Titre uniquement
-            const h1 = doc.querySelector('h1');
-            if(h1) {
-                document.getElementById('add-title').value = h1.innerText.trim();
-                toggleImportModal();
-                alert("Import partiel (Titre uniquement). Le site protège ses données.");
-            } else {
-                throw new Error("Format non reconnu");
-            }
-        }
-    } catch (e) {
-        console.error(e);
-        alert("Impossible d'importer cette recette automatiquement.");
-    } finally {
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-    }
-}
-
 // --- UTILS ---
 function shareRecipe() {
     if(!currentRecipe) return;
@@ -442,7 +566,7 @@ function shareRecipe() {
 
 function toggleSettings() { document.getElementById('settings-modal').classList.toggle('hidden'); }
 function exportData() {
-    const data = { recipes: JSON.parse(localStorage.getItem('foodmood_user_recipes') || '[]'), fav: favorites, shop: shoppingList };
+    const data = { recipes: JSON.parse(localStorage.getItem('foodmood_user_recipes') || '[]'), fav: favorites, shop: shoppingList, tags: userTags, stats: userStats };
     const blob = new Blob([JSON.stringify(data)], {type: "application/json"});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a'); a.href = url; a.download = "foodmood_backup.json"; a.click();
@@ -456,6 +580,8 @@ function importData(input) {
         if(data.recipes) localStorage.setItem('foodmood_user_recipes', JSON.stringify(data.recipes));
         if(data.fav) localStorage.setItem('foodmood_favorites', JSON.stringify(data.fav));
         if(data.shop) localStorage.setItem('foodmood_shopping', JSON.stringify(data.shop));
+        if(data.tags) localStorage.setItem('foodmood_tags', JSON.stringify(data.tags));
+        if(data.stats) localStorage.setItem('foodmood_stats', JSON.stringify(data.stats));
         alert("Données restaurées !"); location.reload();
     };
     reader.readAsText(file);
@@ -478,5 +604,9 @@ function startCooking() {
     scaled.forEach(ing => iL.innerHTML += `<label class="flex items-center gap-3 p-3 bg-white rounded-xl border border-gray-100 shadow-sm cursor-pointer"><input type="checkbox" class="ing-check rounded border-gray-300"><span class="font-medium text-gray-700 select-none">${ing}</span></label>`);
     const sL = document.getElementById('cook-steps-list'); sL.innerHTML="";
     (currentRecipe.s||[]).forEach((s,i)=> sL.innerHTML += `<div class="flex gap-4"><div class="flex-shrink-0 w-8 h-8 bg-orange-100 text-brand font-bold rounded-full flex items-center justify-center text-sm">${i+1}</div><p class="text-gray-600 pt-1">${s}</p></div>`);
+    
+    // GAMIFICATION TRIGGER
+    updateStatsOnClick();
+    
     navigate('cook');
 }
