@@ -32,17 +32,10 @@ let wakeLock = null;
 
 // --- INIT APP ---
 document.addEventListener('DOMContentLoaded', () => { 
-    
-    // 1. CHARGEMENT IMMÉDIAT (Pour corriger le vide au démarrage)
-    // On charge les recettes de base (recettes.js) tout de suite
-    loadRecipes([]).then(() => {
-        updateStatsUI(); // On force l'affichage des stats (même à 0)
-    });
-
-    // 2. Navigation
+    // CORRECTION LIVRE VIDE : Chargement immédiat des recettes statiques
+    loadRecipes([]);
     navigate('home');
     
-    // 3. Écoute connexion Firebase
     auth.onAuthStateChanged((user) => {
         currentUser = user;
         updateAuthUI();
@@ -116,9 +109,9 @@ async function loadRecipes(userLocalRecipes) {
     try { const r = await fetch('data/recettes.json'); if (r.ok) externalRecipes = await r.json(); } catch (e) {}
     try { const r = await fetch('data/desserts.json'); if (r.ok) { const d = await r.json(); dessertRecipes = d.map(x => ({...x, mood: 'patisserie', cat: 'dessert', price: "2"})); } } catch (e) {}
     
-    // IMPORTANT : On récupère les recettes de recettes.js
     const baseRecipes = (typeof RECIPES_DATA !== 'undefined') ? RECIPES_DATA : [];
     
+    // Fusionne Base + Recettes Utilisateur (les > 1000)
     allRecipes = [...baseRecipes, ...externalRecipes, ...dessertRecipes, ...userLocalRecipes];
 }
 
@@ -127,7 +120,14 @@ async function loadRecipes(userLocalRecipes) {
 function addNewTag() {
     const input = document.getElementById('new-tag-input');
     const val = input.value.trim();
-    if(val && !userTags.includes(val)) { userTags.push(val); syncToFirebase('tags', userTags); input.value = ""; }
+    if(val && !userTags.includes(val)) { 
+        userTags.push(val); 
+        syncToFirebase('tags', userTags); 
+        input.value = "";
+        // CORRECTION TAGS : Mise à jour immédiate de toutes les listes
+        renderSettingsTags();
+        renderTagsInForm(); 
+    }
 }
 function removeTag(tag) { userTags = userTags.filter(t => t !== tag); syncToFirebase('tags', userTags); }
 
@@ -146,41 +146,67 @@ function addShopItemManually() {
 function toggleShopItem(idx) { shoppingList[idx].done = !shoppingList[idx].done; syncToFirebase('shop', shoppingList); }
 function clearShoppingList() { shoppingList = []; syncToFirebase('shop', shoppingList); }
 
+// --- SAUVEGARDE ET GESTION DES RECETTES (CORRIGÉ) ---
 function saveRecipe() {
     const title = document.getElementById('add-title').value;
     const ingText = document.getElementById('add-ing').value;
     if(!title || !ingText) { alert("Champs obligatoires !"); return; }
     
+    // ID > 1000 pour les recettes perso
     let finalId = (editingRecipeId && editingRecipeId < 1000) ? Date.now() : (editingRecipeId ? editingRecipeId : Date.now());
     
+    // Récupération correcte des tags
     const selectedTags = [];
     document.querySelectorAll('.tag-checkbox:checked').forEach(cb => selectedTags.push(cb.value));
     
-    const recipeData = {
-        id: finalId, t: title, 
-        mood: document.getElementById('add-mood').value, cat: document.getElementById('add-cat').value, price: document.getElementById('add-price').value,
-        time: document.getElementById('add-time').value||"20", cal: document.getElementById('add-cal').value||"?", em: document.getElementById('add-emoji').value,
-        i: ingText.split('\n').filter(l=>l.trim()!==""), s: document.getElementById('add-steps').value.split('\n').filter(l=>l.trim()!==""),
+    const newRecipe = {
+        id: finalId, 
+        t: title, 
+        mood: document.getElementById('add-mood').value, 
+        cat: document.getElementById('add-cat').value, 
+        price: document.getElementById('add-price').value,
+        time: document.getElementById('add-time').value||"20", 
+        cal: document.getElementById('add-cal').value||"?", 
+        em: document.getElementById('add-emoji').value,
+        i: ingText.split('\n').filter(l=>l.trim()!==""), 
+        s: document.getElementById('add-steps').value.split('\n').filter(l=>l.trim()!==""),
         tags: selectedTags
     };
 
-    let userRecipes = allRecipes.filter(r => r.id > 1000); 
-    
-    if(editingRecipeId && editingRecipeId > 1000) {
+    // CORRECTION "PAS ENREGISTRÉ" :
+    // 1. On sépare les recettes de base (id < 1000) des recettes user
+    const baseRecipes = allRecipes.filter(r => r.id < 1000);
+    let userRecipes = allRecipes.filter(r => r.id >= 1000);
+
+    // 2. On met à jour la liste user
+    if(editingRecipeId && editingRecipeId >= 1000) {
         const idx = userRecipes.findIndex(r => r.id === editingRecipeId);
-        if(idx !== -1) userRecipes[idx] = recipeData;
-    } else { userRecipes.push(recipeData); }
+        if(idx !== -1) userRecipes[idx] = newRecipe;
+    } else { 
+        userRecipes.push(newRecipe); 
+    }
+
+    // 3. On met à jour le tableau global immédiatement pour l'affichage
+    allRecipes = [...baseRecipes, ...userRecipes];
     
+    // 4. On envoie SEULEMENT les recettes user à Firebase
     syncToFirebase('recipes', userRecipes);
-    currentRecipe = recipeData;
-    navigate('result'); editingRecipeId = null;
+    
+    // 5. Mise à jour UI
+    currentRecipe = newRecipe;
+    navigate('result'); 
+    editingRecipeId = null;
 }
 
 function deleteCurrentRecipe() {
     if(!currentRecipe || currentRecipe.id < 1000) return;
     if(confirm("Supprimer ?")) {
-        let userRecipes = allRecipes.filter(r => r.id > 1000 && r.id !== currentRecipe.id);
-        syncToFirebase('recipes', userRecipes); navigate('home');
+        const baseRecipes = allRecipes.filter(r => r.id < 1000);
+        let userRecipes = allRecipes.filter(r => r.id >= 1000 && r.id !== currentRecipe.id);
+        
+        allRecipes = [...baseRecipes, ...userRecipes];
+        syncToFirebase('recipes', userRecipes); 
+        navigate('home');
     }
 }
 
@@ -382,7 +408,6 @@ function searchFridge() {
 }
 function openBadges() {
     const list = document.getElementById('badges-list'); list.innerHTML = ""; let unlockedCount = 0;
-    // LISTE COMPLÈTE RESTAURÉE
     const BADGES = [
         { id: 'first_cook', icon: '🐣', title: 'Premier Pas', desc: 'Cuisiner 1 recette', cond: (s) => s.total >= 1 },
         { id: 'chef_5', icon: '👨‍🍳', title: 'Apprenti', desc: 'Cuisiner 5 recettes', cond: (s) => s.total >= 5 },
@@ -422,7 +447,6 @@ function renderShoppingList() {
     const container = document.getElementById('shopping-list'); container.innerHTML = "";
     if(shoppingList.length === 0) { container.innerHTML = "<div class='text-center text-gray-400 mt-10'>Panier vide 🛒</div>"; return; }
     const groups = {};
-    // LISTE CATÉGORIES RESTAURÉE
     const getCat = (name) => {
         const n = name.toLowerCase();
         if(['pomme','poire','banane','citron','orange','fraise','kiwi','tomate','salade','oignon','ail','échalote','carotte','courgette','poivron','champignon','avocat','concombre','pomme de terre','haricot','épinard','légume','herbe','basilic','persil','ciboulette','menthe'].some(x=>n.includes(x))) return '🥬 Fruits & Légumes';
@@ -443,7 +467,6 @@ function renderShoppingList() {
 }
 function updateStatsUI() {
     let badgesUnlocked = 0; 
-    // RE-CALCUL DES BADGES (Même liste que plus haut)
     const BADGES = [
         { id: 'first_cook', icon: '🐣', title: 'Premier Pas', desc: 'Cuisiner 1 recette', cond: (s) => s.total >= 1 },
         { id: 'chef_5', icon: '👨‍🍳', title: 'Apprenti', desc: 'Cuisiner 5 recettes', cond: (s) => s.total >= 5 },
@@ -470,6 +493,5 @@ function updateStatsUI() {
     const baseCount = (typeof RECIPES_DATA !== 'undefined') ? RECIPES_DATA.length : 0;
     document.getElementById('total-recipes').textContent = allRecipes.length;
     document.getElementById('user-recipes-count').textContent = allRecipes.length - baseCount;
-    // Removed fav-count update to prevent error
     document.getElementById('badge-count').textContent = badgesUnlocked;
 }
