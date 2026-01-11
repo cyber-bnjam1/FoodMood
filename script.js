@@ -3,7 +3,7 @@ const firebaseConfig = {
     apiKey: "AIzaSyAi1MFx5KuzPcpKKMtursIxMUV4MqQs7Nc",
     authDomain: "foodmood-5c124.firebaseapp.com",
     // AJOUT IMPORTANT : L'adresse de la base de données
-    databaseURL: "https://foodmood-5c124-default-rtdb.firebaseio.com", 
+    databaseURL: "https://foodmood-5c124-default-rtdb.europe-west1.firebasedatabase.app", 
     projectId: "foodmood-5c124",
     storageBucket: "foodmood-5c124.firebasestorage.app",
     messagingSenderId: "814046730378",
