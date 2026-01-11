@@ -21,25 +21,28 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     
     <style>
-        /* FIX SCROLL */
-        html, body { width: 100%; height: 100%; overflow-x: hidden; position: fixed; }
-        body { font-family: 'Satoshi', sans-serif; -webkit-tap-highlight-color: transparent; background-color: #FAFAFA; color: #18181b; }
+        /* FIX SCROLL & LAYOUT */
+        html, body { width: 100%; height: 100%; overflow-x: hidden; position: fixed; background-color: #FAFAFA; }
+        body { font-family: 'Satoshi', sans-serif; -webkit-tap-highlight-color: transparent; color: #18181b; }
         
         .bg-brand { background: linear-gradient(135deg, #F97316 0%, #FB923C 100%); }
         .text-brand { color: #EA580C; }
         
-        /* VIEWS */
+        /* VIEWS SYSTEM */
         .view-container { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
             overflow-y: auto; overflow-x: hidden;
-            padding: 20px; padding-bottom: 110px; 
+            padding: 20px; padding-bottom: 120px; /* Espace pour le menu bas */
             background: #FAFAFA; 
             transition: transform 0.25s ease-out, opacity 0.2s; 
             box-sizing: border-box;
+            z-index: 10; /* Niveau de base */
         }
+        
         .hidden-view { transform: translateX(100vw); opacity: 0; pointer-events: none; }
         .active-view { transform: translateX(0); opacity: 1; pointer-events: auto; }
         
+        /* COMPONENTS */
         .card { background: white; border-radius: 24px; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.08); border: 1px solid #f3f4f6; }
         .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
         @keyframes shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
@@ -47,7 +50,7 @@
         ::-webkit-scrollbar { width: 0; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         
-        /* STYLE BOUTON CENTRAL */
+        /* BOUTON CENTRAL */
         .nav-add-btn {
             background: linear-gradient(135deg, #F97316 0%, #FB923C 100%);
             box-shadow: 0 8px 20px -5px rgba(249, 115, 22, 0.4);
@@ -57,7 +60,7 @@
 </head>
 <body>
 
-    <div id="view-home" class="view-container active-view z-10">
+    <div id="view-home" class="view-container active-view">
         <header class="flex justify-between items-center mt-8 mb-6">
             <div>
                 <p class="text-gray-400 text-xs font-bold uppercase tracking-wider">Bienvenue Chef</p>
@@ -129,7 +132,7 @@
         </div>
     </div>
 
-    <div id="view-cookbook" class="view-container hidden-view z-20 bg-gray-50">
+    <div id="view-cookbook" class="view-container hidden-view z-20">
         <div class="flex justify-between items-center mt-8 mb-4">
             <h2 class="font-black text-2xl text-gray-900">Mon Livre</h2>
             <button id="btn-filter-fav" onclick="toggleFavFilter()" class="w-10 h-10 rounded-full bg-white shadow text-gray-300 flex items-center justify-center transition"><i class="fas fa-heart"></i></button>
@@ -149,7 +152,7 @@
         <div id="cookbook-list" class="space-y-3 pb-20"></div>
     </div>
 
-    <div id="view-fridge" class="view-container hidden-view z-20 bg-gray-50">
+    <div id="view-fridge" class="view-container hidden-view z-20">
         <div class="flex justify-between items-center mt-8 mb-6">
             <button onclick="navigate('home')" class="w-10 h-10 rounded-full bg-white shadow flex items-center justify-center"><i class="fas fa-arrow-left"></i></button>
             <h2 class="font-black text-2xl text-gray-900">Frigo</h2>
@@ -258,7 +261,7 @@
         <div class="h-20"></div>
     </div>
 
-    <div id="import-modal" class="fixed inset-0 bg-black/80 backdrop-blur hidden z-50 flex items-center justify-center p-6">
+    <div id="import-modal" class="fixed inset-0 bg-black/80 backdrop-blur hidden z-[200] flex items-center justify-center p-6">
         <div class="bg-white p-6 rounded-3xl w-full max-w-sm text-center">
             <h2 class="text-xl font-black mb-4">Importer du Web</h2>
             <input type="text" id="import-url" placeholder="https://..." class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none mb-4 shadow-inner">
@@ -267,7 +270,7 @@
         </div>
     </div>
 
-    <div id="badges-modal" class="fixed inset-0 bg-black/80 backdrop-blur hidden z-50 flex flex-col items-center justify-center p-6">
+    <div id="badges-modal" class="fixed inset-0 bg-black/80 backdrop-blur hidden z-[200] flex flex-col items-center justify-center p-6">
         <div class="bg-white p-6 rounded-3xl w-full max-w-sm max-h-[80vh] flex flex-col">
             <h2 class="text-xl font-black mb-4 text-center">Mes Trophées</h2>
             <div id="badges-list" class="flex-1 overflow-y-auto grid grid-cols-3 gap-3 pb-4"></div>
@@ -275,7 +278,7 @@
         </div>
     </div>
 
-    <div id="settings-modal" class="fixed inset-0 bg-black/80 backdrop-blur hidden z-50 flex flex-col items-center justify-center p-6">
+    <div id="settings-modal" class="fixed inset-0 bg-black/80 backdrop-blur hidden z-[200] flex flex-col items-center justify-center p-6">
         <div class="bg-white p-6 rounded-3xl w-full max-w-sm max-h-[80vh] overflow-y-auto">
             <h2 class="text-xl font-black mb-4 text-center">Réglages</h2>
             
