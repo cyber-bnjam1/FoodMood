@@ -16,14 +16,14 @@ const provider = new firebase.auth.GoogleAuthProvider();
 
 // VARIABLES GLOBALES
 let currentUser = null; 
-let allRecipes = [];
+let allRecipes = []; // Commence vide maintenant
 let favorites = [];
 let shoppingList = [];
 let fridgeIngredients = []; 
 let userTags = ["Végétarien", "Sans Gluten", "Épicé"]; 
-let userStats = { total:0, healthy:0, fast:0, comfort:0, patisserie:0, cheap:0, exp:0, starter:0, dessert:0, night:0, morning:0, weekend:0, imported:0, created:0, seasonal:0 }; 
+let userStats = { total:0, healthy:0, fast:0, comfort:0, patisserie:0, cheap:0, exp:0, starter:0, dessert:0, aperitif:0, night:0, morning:0, weekend:0, imported:0, created:0, seasonal:0 }; 
 let currentRecipe = null;
-let activeMood = '';
+let activeCategoryTarget = null; // Remplace mood target
 let editingRecipeId = null;
 let currentPortion = 2;
 let activeCategoryFilter = 'all';
@@ -32,13 +32,9 @@ let wakeLock = null;
 
 // --- INIT APP ---
 document.addEventListener('DOMContentLoaded', () => { 
-    // Chargement initial pour éviter le vide
-    loadRecipes([]);
     updateStatsUI();
-
     navigate('home');
     
-    // Écoute de l'authentification
     auth.onAuthStateChanged((user) => {
         currentUser = user;
         updateAuthUI();
@@ -84,36 +80,28 @@ function initDataListener() {
     userRef.on('value', (snapshot) => {
         const data = snapshot.val() || {};
         
-        const userLocalRecipes = data.recipes || [];
+        allRecipes = data.recipes || []; // Plus de distinction
         favorites = data.fav || [];
         shoppingList = data.shop || [];
         if(data.tags) userTags = data.tags;
         if(data.stats) userStats = data.stats;
 
-        loadRecipes(userLocalRecipes).then(() => {
-            updateStatsUI();
-            renderShoppingList();
-            renderSettingsTags();
-            if(document.getElementById('view-cookbook').classList.contains('active-view')) {
-                renderCookbookTagsFilter();
-                filterCookbook();
-            }
-        });
+        updateStatsUI();
+        renderShoppingList();
+        renderSettingsTags();
+        if(document.getElementById('view-cookbook').classList.contains('active-view')) {
+            renderCookbookTagsFilter();
+            filterCookbook();
+        }
     });
 }
 
 function syncToFirebase(path, data) {
     const uid = currentUser ? currentUser.uid : localStorage.getItem('foodmood_guest_id');
-    db.ref(`users/${uid}/${path}`).set(data)
-      .catch(e => console.error("Erreur save:", e));
+    db.ref(`users/${uid}/${path}`).set(data).catch(e => console.error(e));
 }
 
-async function loadRecipes(userLocalRecipes) {
-    const baseRecipes = (typeof RECIPES_DATA !== 'undefined') ? RECIPES_DATA : [];
-    allRecipes = [...baseRecipes, ...userLocalRecipes];
-}
-
-// --- FONCTIONS LOGIQUES ---
+// --- LOGIQUE MÉTIER ---
 
 function addNewTag() {
     const input = document.getElementById('new-tag-input');
@@ -123,46 +111,25 @@ function addNewTag() {
         syncToFirebase('tags', userTags); 
         input.value = "";
         renderSettingsTags();
-        renderTagsInForm(); // Met à jour le formulaire si ouvert
+        renderTagsInForm(); 
     }
 }
-function removeTag(tag) { 
-    userTags = userTags.filter(t => t !== tag); 
-    syncToFirebase('tags', userTags); 
-    renderSettingsTags(); 
-}
+function removeTag(tag) { userTags = userTags.filter(t => t !== tag); syncToFirebase('tags', userTags); renderSettingsTags(); }
 
-// --- GESTION VISUELLE DES TAGS (CORRECTION BUG) ---
-function toggleTagVisual(input) {
-    // Cette fonction force le style quand on clique
-    const label = input.parentElement;
-    if(input.checked) {
-        label.classList.remove('border-gray-200', 'text-gray-500');
-        label.classList.add('border-brand', 'bg-orange-50', 'text-brand');
-    } else {
-        label.classList.add('border-gray-200', 'text-gray-500');
-        label.classList.remove('border-brand', 'bg-orange-50', 'text-brand');
-    }
-}
-
+// CORRECTION BUG VISUEL TAGS : UTILISATION DU DOM DIRECT
 function renderTagsInForm(selectedTags = []) {
     const div = document.getElementById('add-tags-container'); 
     div.innerHTML = "";
-    
     userTags.forEach(t => { 
         const isChecked = selectedTags.includes(t);
-        // On définit les classes initiales selon si c'est coché ou pas
-        const activeClass = isChecked ? "border-brand bg-orange-50 text-brand" : "border-gray-200 text-gray-500";
-        const checkedAttr = isChecked ? "checked" : "";
-        
+        // Utilisation de peer-checked pour le style automatique sans JS
         div.innerHTML += `
-        <label class="cursor-pointer select-none bg-white border px-3 py-1 rounded-full text-xs font-bold transition flex items-center gap-1 ${activeClass}">
-            <input type="checkbox" value="${t}" class="hidden tag-checkbox" ${checkedAttr} onchange="toggleTagVisual(this)">
+        <label class="cursor-pointer select-none border border-gray-200 text-gray-500 px-3 py-1 rounded-full text-xs font-bold transition flex items-center gap-1 has-[:checked]:border-brand has-[:checked]:bg-orange-50 has-[:checked]:text-brand">
+            <input type="checkbox" value="${t}" class="hidden" ${isChecked ? "checked" : ""}>
             ${t}
         </label>`; 
     });
 }
-// --------------------------------------------------
 
 function toggleFavorite() {
     if(!currentRecipe) return;
@@ -179,22 +146,23 @@ function addShopItemManually() {
 function toggleShopItem(idx) { shoppingList[idx].done = !shoppingList[idx].done; syncToFirebase('shop', shoppingList); }
 function clearShoppingList() { shoppingList = []; syncToFirebase('shop', shoppingList); }
 
+// --- SAUVEGARDE SIMPLIFIÉE (TOUT EST DANS FIREBASE) ---
 function saveRecipe() {
     const title = document.getElementById('add-title').value;
     const ingText = document.getElementById('add-ing').value;
     if(!title || !ingText) { alert("Champs obligatoires !"); return; }
     
-    let finalId = (editingRecipeId && editingRecipeId < 1000) ? Date.now() : (editingRecipeId ? editingRecipeId : Date.now());
+    // Si ID null, on crée
+    let finalId = editingRecipeId ? editingRecipeId : Date.now();
     
-    // Récupère les tags cochés
+    // Récupère tags
     const selectedTags = [];
-    document.querySelectorAll('.tag-checkbox:checked').forEach(cb => selectedTags.push(cb.value));
+    document.querySelectorAll('#add-tags-container input:checked').forEach(cb => selectedTags.push(cb.value));
     
     const recipeData = {
         id: finalId, 
         t: title, 
-        mood: document.getElementById('add-mood').value, 
-        cat: document.getElementById('add-cat').value, 
+        cat: document.getElementById('add-cat').value, // Nouvelles catégories
         price: document.getElementById('add-price').value,
         time: document.getElementById('add-time').value||"20", 
         cal: document.getElementById('add-cal').value||"?", 
@@ -204,22 +172,17 @@ function saveRecipe() {
         tags: selectedTags
     };
 
-    // Sépare et Sauvegarde
-    let userRecipes = allRecipes.filter(r => r.id >= 1000);
+    let tempList = [...allRecipes];
     
-    if(editingRecipeId && editingRecipeId >= 1000) {
-        const idx = userRecipes.findIndex(r => r.id === editingRecipeId);
-        if(idx !== -1) userRecipes[idx] = recipeData;
+    if(editingRecipeId) {
+        const idx = tempList.findIndex(r => r.id === editingRecipeId);
+        if(idx !== -1) tempList[idx] = recipeData;
     } else { 
-        userRecipes.push(recipeData); 
+        tempList.push(recipeData); 
     }
     
-    // Sauvegarde Cloud
-    syncToFirebase('recipes', userRecipes);
-    
-    // Mise à jour locale
-    const baseRecipes = allRecipes.filter(r => r.id < 1000);
-    allRecipes = [...baseRecipes, ...userRecipes];
+    // SAUVEGARDE TOUT
+    syncToFirebase('recipes', tempList);
     
     currentRecipe = recipeData;
     navigate('result'); 
@@ -228,10 +191,10 @@ function saveRecipe() {
 }
 
 function deleteCurrentRecipe() {
-    if(!currentRecipe || currentRecipe.id < 1000) return;
+    if(!currentRecipe) return;
     if(confirm("Supprimer ?")) {
-        let userRecipes = allRecipes.filter(r => r.id >= 1000 && r.id !== currentRecipe.id);
-        syncToFirebase('recipes', userRecipes); 
+        let tempList = allRecipes.filter(r => r.id !== currentRecipe.id);
+        syncToFirebase('recipes', tempList); 
         navigate('home');
     }
 }
@@ -246,22 +209,16 @@ function addAllToShop() {
 function updateStatsOnClick() {
     if(!currentRecipe) return;
     userStats.total++;
-    if(currentRecipe.id >= 1000) userStats.created++; 
-    
-    if(currentRecipe.mood === 'healthy') userStats.healthy++;
-    if(currentRecipe.mood === 'fast') userStats.fast++;
-    if(currentRecipe.mood === 'comfort') userStats.comfort++;
-    if(currentRecipe.mood === 'patisserie') userStats.patisserie++;
-    if(currentRecipe.cat === 'starter') userStats.starter++;
-    if(currentRecipe.cat === 'dessert') userStats.dessert++;
-    if(currentRecipe.price === '1') userStats.cheap++;
-    if(currentRecipe.price === '3') userStats.exp++;
+    // Simple incrémentation globale
+    const cat = currentRecipe.cat || 'main';
+    if(userStats[cat] !== undefined) userStats[cat]++;
     
     const hour = new Date().getHours();
     if(hour < 10) userStats.morning++;
     if(hour >= 22) userStats.night++;
     const day = new Date().getDay();
     if(day === 0 || day === 6) userStats.weekend++;
+    
     if(!checkSeasonality(currentRecipe.i)) userStats.seasonal++;
 
     syncToFirebase('stats', userStats); updateStatsUI();
@@ -293,7 +250,7 @@ function fetchRecipeFromUrl() {
     }).catch(e => { console.error(e); alert("Erreur import ou site protégé."); }).finally(() => { btn.innerHTML = originalText; btn.disabled = false; });
 }
 
-// --- STANDARD UI FUNCTIONS ---
+// --- NAVIGATION ---
 function navigate(viewName) {
     document.querySelectorAll('.view-container').forEach(el => { el.classList.remove('active-view'); el.classList.add('hidden-view'); });
     document.getElementById(`view-${viewName}`).classList.remove('hidden-view');
@@ -304,10 +261,17 @@ function navigate(viewName) {
     if(viewName === 'shop') document.getElementById('nav-shop').classList.add('active');
     if(viewName === 'cook') { requestWakeLock(); } else { releaseWakeLock(); }
 }
-function findRecipe(mood) { activeMood = mood; rollDice(); navigate('result'); }
+function findRecipeByCat(cat) { activeCategoryTarget = cat; rollDice(); navigate('result'); }
 function rollDice() {
-    let filtered = activeMood === 'all' ? allRecipes : allRecipes.filter(r => r.mood === activeMood);
-    if(filtered.length === 0) filtered = allRecipes; 
+    let filtered = allRecipes;
+    if (activeCategoryTarget && activeCategoryTarget !== 'all') {
+        filtered = allRecipes.filter(r => r.cat === activeCategoryTarget);
+    }
+    if(filtered.length === 0) { 
+        alert("Aucune recette dans cette catégorie pour l'instant !"); 
+        navigate('home'); 
+        return; 
+    }
     currentRecipe = filtered[Math.floor(Math.random() * filtered.length)];
     renderResult(currentRecipe);
 }
@@ -322,8 +286,9 @@ function renderResult(r) {
     const alertSeason = document.getElementById('season-alert');
     if(checkSeasonality(r.i)) { alertSeason.classList.remove('hidden'); } else { alertSeason.classList.add('hidden'); }
     renderIngredientsList(); updateFavIcon();
-    const btnDel = document.getElementById('btn-delete'); const btnEdit = document.getElementById('btn-edit');
-    btnEdit.classList.remove('hidden'); if(r.id >= 1000) btnDel.classList.remove('hidden'); else btnDel.classList.add('hidden');
+    // Boutons edit toujours visibles maintenant
+    document.getElementById('btn-edit').classList.remove('hidden');
+    document.getElementById('btn-delete').classList.remove('hidden');
 }
 function checkSeasonality(ingredients) {
     if(!ingredients) return false;
@@ -353,7 +318,7 @@ function updateFavIcon() {
 function openEditMode() {
     if(!currentRecipe) return; editingRecipeId = currentRecipe.id;
     document.getElementById('form-title').textContent="Modifier Recette"; document.getElementById('add-title').value = currentRecipe.t;
-    document.getElementById('add-emoji').value = currentRecipe.em; document.getElementById('add-mood').value = currentRecipe.mood;
+    document.getElementById('add-emoji').value = currentRecipe.em; 
     document.getElementById('add-cat').value = currentRecipe.cat || 'main'; document.getElementById('add-price').value = currentRecipe.price || '2'; 
     document.getElementById('add-time').value = currentRecipe.time; document.getElementById('add-cal').value = currentRecipe.cal;
     document.getElementById('add-ing').value = currentRecipe.i.join('\n'); document.getElementById('add-steps').value = (currentRecipe.s||[]).join('\n');
@@ -383,7 +348,7 @@ function filterCookbook() {
     const term = document.getElementById('search-input').value.toLowerCase();
     const onlyFav = document.getElementById('btn-filter-fav').classList.contains('bg-red-500');
     const filtered = allRecipes.filter(r => {
-        const matchText = r.t.toLowerCase().includes(term) || r.mood.includes(term);
+        const matchText = r.t.toLowerCase().includes(term);
         const matchFav = onlyFav ? favorites.includes(r.id) : true;
         const currentCat = r.cat || 'main'; const matchCat = activeCategoryFilter === 'all' ? true : currentCat === activeCategoryFilter;
         let matchTag = true; if(activeTagFilter) { matchTag = r.tags && r.tags.includes(activeTagFilter); }
@@ -396,14 +361,14 @@ function renderCookbookList(list, targetId) {
     if (list.length === 0) { container.innerHTML = "<div class='text-center text-gray-400 mt-10'>Rien ici...</div>"; return; }
     list.sort((a, b) => b.id - a.id);
     list.forEach(r => {
-        let moodIcon = '⚡️'; let moodColor = 'bg-gray-100 text-gray-700';
-        if(r.mood==='fast') { moodIcon='⚡️'; moodColor='bg-yellow-100 text-yellow-700'; }
-        else if(r.mood==='healthy') { moodIcon='🥗'; moodColor='bg-green-100 text-green-700'; }
-        else if(r.mood==='comfort') { moodIcon='🍔'; moodColor='bg-red-100 text-red-700'; }
-        else if(r.mood==='patisserie') { moodIcon='🧁'; moodColor='bg-pink-100 text-pink-700'; }
         const isFav = favorites.includes(r.id) ? '<i class="fas fa-heart text-red-500 ml-1"></i>' : '';
-        const cat = r.cat || 'main'; const catIcon = cat === 'starter' ? '🥕' : (cat === 'dessert' ? '🍰' : '🍗');
-        container.innerHTML += `<div onclick="currentRecipe=allRecipes.find(x=>x.id==${r.id});renderResult(currentRecipe);navigate('result')" class="bg-white p-3 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-3 active:scale-[0.98] transition cursor-pointer"><div class="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center text-2xl flex-shrink-0 relative">${r.em}<span class="absolute -bottom-1 -right-1 text-[10px] bg-white rounded-full p-0.5 border border-gray-100 shadow-sm">${catIcon}</span></div><div class="flex-1 min-w-0"><h4 class="font-bold text-gray-800 truncate">${r.t} ${isFav}</h4><div class="flex items-center gap-2 mt-1"><span class="text-[10px] font-bold px-2 py-0.5 rounded-md ${moodColor}">${moodIcon} ${r.mood.toUpperCase()}</span><span class="text-[10px] text-gray-400 font-bold"><i class="far fa-clock"></i> ${r.time} min</span></div></div><div class="text-gray-300"><i class="fas fa-chevron-right"></i></div></div>`;
+        const cat = r.cat || 'main'; 
+        let catIcon = '🍗';
+        if(cat==='aperitif') catIcon='🥜';
+        if(cat==='starter') catIcon='🥗';
+        if(cat==='dessert') catIcon='🧁';
+        
+        container.innerHTML += `<div onclick="currentRecipe=allRecipes.find(x=>x.id==${r.id});renderResult(currentRecipe);navigate('result')" class="bg-white p-3 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-3 active:scale-[0.98] transition cursor-pointer"><div class="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center text-2xl flex-shrink-0 relative">${r.em}<span class="absolute -bottom-1 -right-1 text-[10px] bg-white rounded-full p-0.5 border border-gray-100 shadow-sm">${catIcon}</span></div><div class="flex-1 min-w-0"><h4 class="font-bold text-gray-800 truncate">${r.t} ${isFav}</h4><div class="flex items-center gap-2 mt-1"><span class="text-[10px] text-gray-400 font-bold"><i class="far fa-clock"></i> ${r.time} min</span></div></div><div class="text-gray-300"><i class="fas fa-chevron-right"></i></div></div>`;
     });
 }
 function renderCookbookTagsFilter() {
@@ -414,10 +379,6 @@ function renderCookbookTagsFilter() {
 function renderSettingsTags() {
     const div = document.getElementById('settings-tags-list'); div.innerHTML = "";
     userTags.forEach(t => { div.innerHTML += `<div class="bg-gray-100 px-3 py-1 rounded-full text-sm flex items-center gap-2">${t} <button onclick="removeTag('${t}')" class="text-red-500"><i class="fas fa-times"></i></button></div>`; });
-}
-function renderTagsInForm(selectedTags = []) {
-    const div = document.getElementById('add-tags-container'); div.innerHTML = "";
-    userTags.forEach(t => { const isSelected = selectedTags.includes(t); div.innerHTML += `<label class="cursor-pointer select-none bg-white border ${isSelected?'border-brand bg-orange-50 text-brand':'border-gray-200 text-gray-500'} px-3 py-1 rounded-full text-xs font-bold transition"><input type="checkbox" value="${t}" class="hidden tag-checkbox" ${isSelected?'checked':''} onchange="this.parentElement.classList.toggle('border-brand');this.parentElement.classList.toggle('text-brand');this.parentElement.classList.toggle('bg-orange-50')">${t}</label>`; });
 }
 function openAddMode() { editingRecipeId = null; document.getElementById('form-title').textContent="Nouvelle Recette"; resetForm(); navigate('add'); renderTagsInForm(); }
 function toggleImportModal() { document.getElementById('import-modal').classList.toggle('hidden'); }
@@ -436,22 +397,8 @@ function openBadges() {
         { id: 'first_cook', icon: '🐣', title: 'Premier Pas', desc: 'Cuisiner 1 recette', cond: (s) => s.total >= 1 },
         { id: 'chef_5', icon: '👨‍🍳', title: 'Apprenti', desc: 'Cuisiner 5 recettes', cond: (s) => s.total >= 5 },
         { id: 'chef_20', icon: '🔥', title: 'Sous-Chef', desc: 'Cuisiner 20 recettes', cond: (s) => s.total >= 20 },
-        { id: 'chef_50', icon: '👑', title: 'Chef Étoilé', desc: 'Cuisiner 50 recettes', cond: (s) => s.total >= 50 },
         { id: 'healthy_10', icon: '🥗', title: 'Healthy Life', desc: '10 recettes Healthy', cond: (s) => s.healthy >= 10 },
-        { id: 'fat_10', icon: '🍔', title: 'Gros Bidon', desc: '10 recettes Plaisir', cond: (s) => s.comfort >= 10 },
-        { id: 'fast_10', icon: '⚡', title: 'Speedy', desc: '10 recettes Rapides', cond: (s) => s.fast >= 10 },
-        { id: 'sweet_10', icon: '🧁', title: 'Bec Sucré', desc: '10 Pâtisseries', cond: (s) => s.patisserie >= 10 },
-        { id: 'cheap_10', icon: '💸', title: 'Économe', desc: '10 recettes Pas Chères', cond: (s) => s.cheap >= 10 },
-        { id: 'rich_5', icon: '💎', title: 'Luxe', desc: '5 recettes Chics', cond: (s) => s.exp >= 5 },
-        { id: 'starter_5', icon: '🥕', title: 'Mise en bouche', desc: '5 Entrées', cond: (s) => s.starter >= 5 },
-        { id: 'dessert_10', icon: '🍰', title: 'Gourmand', desc: '10 Desserts', cond: (s) => s.dessert >= 10 },
-        { id: 'night_owl', icon: '🦉', title: 'Oiseau de Nuit', desc: 'Cuisiner après 22h', cond: (s) => s.night >= 1 },
-        { id: 'morning', icon: '☀️', title: 'Lève-tôt', desc: 'Cuisiner avant 10h', cond: (s) => s.morning >= 1 },
-        { id: 'weekend', icon: '🎉', title: 'Dimanche', desc: 'Cuisiner le weekend', cond: (s) => s.weekend >= 5 },
         { id: 'importer', icon: '🌍', title: 'Explorateur', desc: 'Importer 1 recette', cond: (s) => s.imported >= 1 },
-        { id: 'creator', icon: '✍️', title: 'Créateur', desc: 'Créer 5 recettes perso', cond: (s) => s.created >= 5 },
-        { id: 'season', icon: '🍂', title: 'De Saison', desc: 'Cuisiner 5 fois de saison', cond: (s) => s.seasonal >= 5 },
-        { id: 'variety', icon: '🌈', title: 'Polyvalent', desc: 'Cuisiner 1 de chaque Mood', cond: (s) => s.healthy>0 && s.fast>0 && s.comfort>0 && s.patisserie>0 },
         { id: 'master', icon: '🏆', title: 'Légende', desc: '100 recettes cuisinées', cond: (s) => s.total >= 100 }
     ];
     BADGES.forEach(b => { const unlocked = b.cond(userStats); if(unlocked) unlockedCount++; list.innerHTML += `<div onclick="alert('${b.title} : ${b.desc}')" class="flex flex-col items-center justify-center p-3 rounded-2xl bg-gray-50 border ${unlocked ? 'border-purple-200 bg-purple-50' : 'border-gray-100'} ${unlocked ? '' : 'badge-locked'} cursor-pointer"><div class="text-3xl mb-1">${b.icon}</div><div class="text-[10px] font-bold text-center leading-tight ${unlocked ? 'text-purple-700' : 'text-gray-400'}">${b.title}</div></div>`; });
@@ -489,37 +436,18 @@ function renderShoppingList() {
     });
 }
 function updateStatsUI() {
+    document.getElementById('total-recipes').textContent = allRecipes.length;
+    document.getElementById('user-recipes-count').textContent = allRecipes.length; // Tout est "création" maintenant
+    
+    // BADGES
     let badgesUnlocked = 0; 
     const BADGES = [
         { id: 'first_cook', icon: '🐣', title: 'Premier Pas', desc: 'Cuisiner 1 recette', cond: (s) => s.total >= 1 },
         { id: 'chef_5', icon: '👨‍🍳', title: 'Apprenti', desc: 'Cuisiner 5 recettes', cond: (s) => s.total >= 5 },
         { id: 'chef_20', icon: '🔥', title: 'Sous-Chef', desc: 'Cuisiner 20 recettes', cond: (s) => s.total >= 20 },
-        { id: 'chef_50', icon: '👑', title: 'Chef Étoilé', desc: 'Cuisiner 50 recettes', cond: (s) => s.total >= 50 },
-        { id: 'healthy_10', icon: '🥗', title: 'Healthy Life', desc: '10 recettes Healthy', cond: (s) => s.healthy >= 10 },
-        { id: 'fat_10', icon: '🍔', title: 'Gros Bidon', desc: '10 recettes Plaisir', cond: (s) => s.comfort >= 10 },
-        { id: 'fast_10', icon: '⚡', title: 'Speedy', desc: '10 recettes Rapides', cond: (s) => s.fast >= 10 },
-        { id: 'sweet_10', icon: '🧁', title: 'Bec Sucré', desc: '10 Pâtisseries', cond: (s) => s.patisserie >= 10 },
-        { id: 'cheap_10', icon: '💸', title: 'Économe', desc: '10 recettes Pas Chères', cond: (s) => s.cheap >= 10 },
-        { id: 'rich_5', icon: '💎', title: 'Luxe', desc: '5 recettes Chics', cond: (s) => s.exp >= 5 },
-        { id: 'starter_5', icon: '🥕', title: 'Mise en bouche', desc: '5 Entrées', cond: (s) => s.starter >= 5 },
-        { id: 'dessert_10', icon: '🍰', title: 'Gourmand', desc: '10 Desserts', cond: (s) => s.dessert >= 10 },
-        { id: 'night_owl', icon: '🦉', title: 'Oiseau de Nuit', desc: 'Cuisiner après 22h', cond: (s) => s.night >= 1 },
-        { id: 'morning', icon: '☀️', title: 'Lève-tôt', desc: 'Cuisiner avant 10h', cond: (s) => s.morning >= 1 },
-        { id: 'weekend', icon: '🎉', title: 'Dimanche', desc: 'Cuisiner le weekend', cond: (s) => s.weekend >= 5 },
         { id: 'importer', icon: '🌍', title: 'Explorateur', desc: 'Importer 1 recette', cond: (s) => s.imported >= 1 },
-        { id: 'creator', icon: '✍️', title: 'Créateur', desc: 'Créer 5 recettes perso', cond: (s) => s.created >= 5 },
-        { id: 'season', icon: '🍂', title: 'De Saison', desc: 'Cuisiner 5 fois de saison', cond: (s) => s.seasonal >= 5 },
-        { id: 'variety', icon: '🌈', title: 'Polyvalent', desc: 'Cuisiner 1 de chaque Mood', cond: (s) => s.healthy>0 && s.fast>0 && s.comfort>0 && s.patisserie>0 },
         { id: 'master', icon: '🏆', title: 'Légende', desc: '100 recettes cuisinées', cond: (s) => s.total >= 100 }
     ];
     BADGES.forEach(b => { if(b.cond(userStats)) badgesUnlocked++; });
-    
-    // CORRECTION STATS VIDE
-    const baseCount = (typeof RECIPES_DATA !== 'undefined') ? RECIPES_DATA.length : 30;
-    const total = allRecipes.length || 30;
-    const created = Math.max(0, total - baseCount);
-    
-    document.getElementById('total-recipes').textContent = total;
-    document.getElementById('user-recipes-count').textContent = created;
     document.getElementById('badge-count').textContent = badgesUnlocked;
 }
