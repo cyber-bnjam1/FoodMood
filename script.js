@@ -25,7 +25,7 @@ let fridgeIngredients = [];
 let currentRecipe = null;
 let activeCategoryTarget = null;
 let editingRecipeId = null;
-let currentPortion = 1; // MODIFIÉ : Base 1
+let currentPortion = 1;
 let activeCategoryFilter = 'all';
 let activeTagFilter = null;
 let wakeLock = null; 
@@ -100,6 +100,43 @@ function openEditMode() {
     
     renderTagsInForm(currentRecipe.tags || []); 
     navigate('add');
+}
+
+// NOUVEAU : MODE LECTURE (VISUALISATION)
+function openReadMode() {
+    if(!currentRecipe) return;
+    const content = document.getElementById('read-content');
+    
+    const scaledIng = getScaledIngredients(currentRecipe.i, currentPortion);
+    let ingListHtml = `<ul class="list-disc pl-5 space-y-2 text-gray-700">`;
+    scaledIng.forEach(i => ingListHtml += `<li>${i}</li>`);
+    ingListHtml += `</ul>`;
+
+    let stepsHtml = `<div class="space-y-4">`;
+    (currentRecipe.s || []).forEach((s, i) => {
+        stepsHtml += `<p class="text-gray-700"><span class="font-bold text-brand mr-2">${i+1}.</span> ${s}</p>`;
+    });
+    stepsHtml += `</div>`;
+
+    content.innerHTML = `
+        <div class="text-center mb-8">
+            <div class="text-6xl mb-4">${currentRecipe.em}</div>
+            <h1 class="text-3xl font-black text-gray-900 mb-2">${currentRecipe.t}</h1>
+            <div class="flex justify-center gap-4 text-sm text-gray-500 font-bold">
+                <span><i class="far fa-clock"></i> ${currentRecipe.time} min</span>
+                <span><i class="fas fa-utensils"></i> ${currentPortion} pers.</span>
+            </div>
+        </div>
+        <div class="px-6 mb-6">
+            <h3 class="font-bold text-lg mb-3">Ingrédients</h3>
+            ${ingListHtml}
+        </div>
+        <div class="px-6">
+            <h3 class="font-bold text-lg mb-3">Instructions</h3>
+            ${stepsHtml}
+        </div>
+    `;
+    navigate('read');
 }
 
 // --- STATS & COMPTEURS ---
@@ -320,14 +357,12 @@ function checkSeasonality(ingredients) {
     return false;
 }
 
-// LOGIQUE MODIFIÉE POUR x1 et Pas 0.5
 function changePortion(delta) { 
     if(currentPortion + delta < 0.5) return; 
     currentPortion += delta; 
     document.getElementById('portion-count').textContent = currentPortion; 
     renderIngredientsList(); 
 }
-// LOGIQUE MODIFIÉE : RATIO = PORTION (car base x1)
 function getScaledIngredients(ingredients, portion) { 
     const ratio = portion; 
     return ingredients.map(line => { 
@@ -347,15 +382,41 @@ function updateFavIcon() { const btn = document.getElementById('btn-fav'); if(fa
 function deleteCurrentRecipe() { if(!currentRecipe) return; if(confirm("Supprimer ?")) { allRecipes = allRecipes.filter(r => r.id !== currentRecipe.id); saveData(); navigate('home'); } }
 function updateStatsOnClick() { if(!currentRecipe) return; const cat = currentRecipe.cat || 'main'; if(userStats[cat] !== undefined) userStats[cat]++; userStats.total++; saveData(); }
 
+// --- NOUVEAU DESIGN CUISINE (CARTES & TIMELINE) ---
 function startCooking() {
     if(!currentRecipe) return;
-    document.getElementById('cook-title').textContent = currentRecipe.t; document.getElementById('cook-time').textContent = currentRecipe.time+" min";
-    const iL = document.getElementById('cook-ing-list'); iL.innerHTML="";
+    document.getElementById('cook-title').textContent = currentRecipe.t; 
+    document.getElementById('cook-timer-badge').textContent = currentRecipe.time+" min";
+    
+    // Ingrédients : Cartes cliquables
+    const iL = document.getElementById('cook-ing-list'); 
+    iL.innerHTML="";
     const scaled = getScaledIngredients(currentRecipe.i, currentPortion);
-    scaled.forEach(ing => iL.innerHTML += `<label class="flex items-center gap-3 p-3 bg-white rounded-xl border border-gray-100 shadow-sm cursor-pointer"><input type="checkbox" class="ing-check rounded border-gray-300"><span class="font-medium text-gray-700 select-none">${ing}</span></label>`);
-    const sL = document.getElementById('cook-steps-list'); sL.innerHTML="";
-    (currentRecipe.s||[]).forEach((s,i)=> sL.innerHTML += `<div class="flex gap-4"><div class="flex-shrink-0 w-8 h-8 bg-orange-100 text-brand font-bold rounded-full flex items-center justify-center text-sm">${i+1}</div><p class="text-gray-600 pt-1">${s}</p></div>`);
-    updateStatsOnClick(); navigate('cook');
+    
+    scaled.forEach((ing, i) => { 
+        iL.innerHTML += `
+        <div onclick="this.classList.toggle('checked')" class="ing-card bg-white p-4 rounded-2xl shadow-sm border border-orange-100 flex items-center justify-center text-center cursor-pointer transition-all active:scale-95 select-none">
+            <span class="font-bold text-sm text-gray-700 leading-tight">${ing}</span>
+        </div>`; 
+    });
+
+    // Étapes : Timeline
+    const sL = document.getElementById('cook-steps-list'); 
+    sL.innerHTML="";
+    (currentRecipe.s||[]).forEach((s,i)=> {
+        sL.innerHTML += `
+        <div class="relative pl-8 pb-8 border-l-2 border-orange-100 last:border-0 last:pb-0">
+            <div class="absolute -left-[17px] top-0 step-circle bg-white border-2 border-brand text-brand shadow-sm">
+                ${i+1}
+            </div>
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-50">
+                <p class="text-gray-700 font-medium leading-relaxed">${s}</p>
+            </div>
+        </div>`; 
+    });
+
+    updateStatsOnClick(); 
+    navigate('cook');
 }
 
 function setCategoryFilter(cat) { activeCategoryFilter = cat; updateFiltersUI(); filterCookbook(); }
