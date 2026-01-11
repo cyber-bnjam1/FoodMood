@@ -25,7 +25,7 @@ let fridgeIngredients = [];
 let currentRecipe = null;
 let activeCategoryTarget = null;
 let editingRecipeId = null;
-let currentPortion = 2;
+let currentPortion = 1; // MODIFIÉ : Base 1
 let activeCategoryFilter = 'all';
 let activeTagFilter = null;
 let wakeLock = null; 
@@ -104,22 +104,14 @@ function openEditMode() {
 
 // --- STATS & COMPTEURS ---
 function updateStatsUI() {
-    // 1. Total
     document.getElementById('total-recipes').textContent = allRecipes.length;
-    
-    // 2. Créations (Basé sur le tag exact "Création")
     const createdCount = allRecipes.filter(r => r.tags && r.tags.includes('Création')).length;
     document.getElementById('created-recipes-count').textContent = createdCount;
-    
-    // 3. Favoris
     document.getElementById('fav-count').textContent = favorites.length;
-    
-    // 4. Cuisinés
     document.getElementById('cooked-count').textContent = userStats.total;
     
-    // 5. Badges
     let badgesUnlocked = 0; 
-    const BADGES = getBadgesList(); // Utilise la liste centralisée
+    const BADGES = getBadgesList(); 
     BADGES.forEach(b => { if(b.cond(userStats)) badgesUnlocked++; });
     document.getElementById('badge-count').textContent = badgesUnlocked;
 }
@@ -134,7 +126,7 @@ function saveData() {
     };
     
     localStorage.setItem('foodmood_backup', JSON.stringify(localData));
-    updateStatsUI(); // Mise à jour immédiate des compteurs
+    updateStatsUI(); 
 
     if(currentUser) {
         db.ref('users/' + currentUser.uid).set(localData)
@@ -172,18 +164,15 @@ function resetCookingStats() {
     }
 }
 
-// Factorisation du chargement des données
 function loadDataFromObject(data) {
     allRecipes = data.recipes || [];
     favorites = data.fav || [];
-    
     if(data.tags && Array.isArray(data.tags)) {
         userTags = data.tags;
         if(!userTags.includes("Création")) userTags.push("Création");
     } else {
         userTags = ["Végétarien", "Sans Gluten", "Épicé", "Création"];
     }
-
     userStats = data.stats || userStats;
     localStorage.setItem('foodmood_backup', JSON.stringify(data));
     updateStatsUI();
@@ -204,12 +193,11 @@ function initDataListener() {
         const data = snapshot.val();
         if(data) {
             loadDataFromObject(data);
-            console.log("🔄 Synchro Auto Cloud");
         }
     });
 }
 
-// --- AUTH (Correction setPersistence) ---
+// --- AUTH ---
 function loginWithGoogle() {
     auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
         .then(() => auth.signInWithPopup(provider))
@@ -241,7 +229,6 @@ function updateAuthUI() {
 // --- CORE LOGIC ---
 
 function saveRecipe() {
-    // Check connexion optionnelle
     if (!currentUser) { if(!confirm("Mode hors ligne. Continuer ?")) return; }
 
     const title = document.getElementById('add-title').value;
@@ -274,7 +261,7 @@ function saveRecipe() {
         userStats.total++;
     }
     
-    saveData(); // Sauvegarde et update stats
+    saveData(); 
     currentRecipe = recipeData;
     navigate('result'); 
     editingRecipeId = null;
@@ -311,7 +298,8 @@ function rollDice() {
 function reroll() { const card = document.getElementById('result-card'); card.classList.add('shake'); setTimeout(() => card.classList.remove('shake'), 500); rollDice(); }
 
 function renderResult(r) {
-    currentPortion = 2; document.getElementById('portion-count').textContent = currentPortion;
+    currentPortion = 1; // RESET A 1
+    document.getElementById('portion-count').textContent = currentPortion;
     document.getElementById('res-emoji').textContent = r.em; document.getElementById('res-title').textContent = r.t;
     document.getElementById('res-time').textContent = r.time + ' min'; document.getElementById('res-cal').textContent = r.cal + ' kcal';
     const priceEl = document.getElementById('res-price'); const p = r.price || "2"; priceEl.textContent = p === "1" ? "€" : (p === "2" ? "€€" : "€€€");
@@ -331,8 +319,28 @@ function checkSeasonality(ingredients) {
     if (isWinter) { return ingredients.some(ing => badWinter.some(bad => ing.toLowerCase().includes(bad))); }
     return false;
 }
-function changePortion(delta) { if(currentPortion + delta < 1) return; currentPortion += delta; document.getElementById('portion-count').textContent = currentPortion; renderIngredientsList(); }
-function getScaledIngredients(ingredients, portion) { const ratio = portion / 2; return ingredients.map(line => { const match = line.match(/^(\d+(?:[\.,]\d+)?)\s*(.*)$/); if (match && portion !== 2) { let qty = parseFloat(match[1].replace(',', '.')); let newQty = Math.round((qty * ratio) * 10) / 10; return `${newQty} ${match[2]}`; } return line; }); }
+
+// LOGIQUE MODIFIÉE POUR x1 et Pas 0.5
+function changePortion(delta) { 
+    if(currentPortion + delta < 0.5) return; 
+    currentPortion += delta; 
+    document.getElementById('portion-count').textContent = currentPortion; 
+    renderIngredientsList(); 
+}
+// LOGIQUE MODIFIÉE : RATIO = PORTION (car base x1)
+function getScaledIngredients(ingredients, portion) { 
+    const ratio = portion; 
+    return ingredients.map(line => { 
+        const match = line.match(/^(\d+(?:[\.,]\d+)?)\s*(.*)$/); 
+        if (match && portion !== 1) { 
+            let qty = parseFloat(match[1].replace(',', '.')); 
+            let newQty = Math.round((qty * ratio) * 10) / 10; 
+            return `${newQty} ${match[2]}`; 
+        } 
+        return line; 
+    }); 
+}
+
 function renderIngredientsList() { if(!currentRecipe) return; const cont = document.getElementById('res-preview-ing'); cont.innerHTML = ""; const scaled = getScaledIngredients(currentRecipe.i, currentPortion); scaled.forEach(ing => { cont.innerHTML += `<span class="bg-gray-50 text-gray-600 text-[10px] px-2 py-1 rounded-md font-medium border border-gray-100">${ing}</span>`; }); }
 function updateFavIcon() { const btn = document.getElementById('btn-fav'); if(favorites.includes(currentRecipe.id)) { btn.classList.add('text-red-500'); btn.classList.remove('text-gray-300'); } else { btn.classList.remove('text-red-500'); btn.classList.add('text-gray-300'); } }
 
@@ -381,7 +389,6 @@ function renderCookbookTagsFilter() {
 }
 function toggleTagFilter(tag) { if(activeTagFilter === tag) activeTagFilter = null; else activeTagFilter = tag; renderCookbookTagsFilter(); filterCookbook(); }
 
-// --- BADGES LIST (Centralisée) ---
 function getBadgesList() {
     return [
         { id: 'first_cook', icon: '🐣', title: 'Premier Pas', desc: 'Cuisiner 1 recette', cond: (s) => s.total >= 1 },
