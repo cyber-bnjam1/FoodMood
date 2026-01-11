@@ -75,27 +75,22 @@
         </header>
 
         <div class="grid grid-cols-5 gap-2 mb-8">
-            
             <div class="bg-orange-100 py-3 rounded-xl flex flex-col items-center justify-center">
                 <span id="total-recipes" class="text-lg font-black text-brand leading-none mb-1">0</span>
                 <span class="text-[8px] uppercase font-bold text-orange-800/60">Total</span>
             </div>
-
             <div class="bg-blue-100 py-3 rounded-xl flex flex-col items-center justify-center">
                 <span id="created-recipes-count" class="text-lg font-black text-blue-600 leading-none mb-1">0</span>
                 <span class="text-[8px] uppercase font-bold text-blue-800/60">Créations</span>
             </div>
-
             <div class="bg-pink-100 py-3 rounded-xl flex flex-col items-center justify-center">
                 <span id="fav-count" class="text-lg font-black text-pink-600 leading-none mb-1">0</span>
                 <span class="text-[8px] uppercase font-bold text-pink-800/60">Favoris</span>
             </div>
-
             <div class="bg-green-100 py-3 rounded-xl flex flex-col items-center justify-center">
                 <span id="cooked-count" class="text-lg font-black text-green-600 leading-none mb-1">0</span>
                 <span class="text-[8px] uppercase font-bold text-green-800/60">Cuisinés</span>
             </div>
-
             <div class="bg-purple-100 py-3 rounded-xl flex flex-col items-center justify-center">
                 <span id="badge-count" class="text-lg font-black text-purple-600 leading-none mb-1">0</span>
                 <span class="text-[8px] uppercase font-bold text-purple-800/60">Badges</span>
@@ -292,6 +287,7 @@
                 </div>
                 <div id="auth-ui-logged-in" class="hidden">
                     <p id="user-email" class="text-xs text-gray-500 mb-3 font-bold"></p>
+                    <button onclick="forceManualSync()" class="bg-green-100 text-green-700 py-2 px-4 rounded-xl font-bold w-full mb-2 flex items-center justify-center gap-2"><i class="fas fa-sync"></i> Forcer la Synchro Cloud</button>
                     <button onclick="logout()" class="bg-gray-200 text-gray-700 py-2 px-4 rounded-xl font-bold w-full">Déconnexion</button>
                 </div>
             </div>
