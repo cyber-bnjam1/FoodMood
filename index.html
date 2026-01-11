@@ -50,6 +50,11 @@
         ::-webkit-scrollbar { width: 0; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         
+        /* STYLE SPECIFIQUE MODE CUISINE */
+        .ing-card.checked { background-color: #F3F4F6; border-color: transparent; opacity: 0.6; }
+        .ing-card.checked span { text-decoration: line-through; color: #9CA3AF; }
+        .step-circle { min-width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-weight: 900; }
+        
         /* BOUTON CENTRAL */
         .nav-add-btn {
             background: linear-gradient(135deg, #F97316 0%, #FB923C 100%);
@@ -187,15 +192,20 @@
                     <span class="bg-gray-100 px-3 py-1 rounded-lg text-xs font-bold text-gray-600 flex items-center gap-1"><i class="fas fa-fire"></i> <span id="res-cal">--</span></span>
                     <span id="res-price" class="bg-gray-100 px-3 py-1 rounded-lg text-xs font-bold text-gray-600 flex items-center gap-1">--</span>
                 </div>
+                
                 <div class="flex items-center gap-4 mb-4 bg-orange-50 px-4 py-1 rounded-full border border-orange-100">
                     <button onclick="changePortion(-0.5)" class="text-brand font-bold px-2">-</button>
                     <span class="text-xs font-bold text-gray-600">Qté x<span id="portion-count">1</span></span>
                     <button onclick="changePortion(0.5)" class="text-brand font-bold px-2">+</button>
                 </div>
+
                 <div class="w-full border-t border-gray-100 pt-4">
                     <div class="flex justify-between items-end mb-2"><p class="text-[10px] uppercase font-bold text-gray-400">Ingrédients</p></div>
                     <div id="res-preview-ing" class="flex flex-wrap justify-center gap-2 max-h-32 overflow-y-auto"></div>
                 </div>
+                
+                <button onclick="openReadMode()" class="mt-4 bg-gray-100 text-gray-700 py-2 px-4 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-gray-200 transition"><i class="fas fa-book-open"></i> Mode Lecture</button>
+
                 <div class="absolute top-4 left-4 flex gap-2">
                     <button id="btn-edit" class="text-gray-300 hover:text-blue-500" onclick="openEditMode()"><i class="fas fa-pen"></i></button>
                     <button id="btn-delete" class="text-gray-300 hover:text-red-500" onclick="deleteCurrentRecipe()"><i class="fas fa-trash"></i></button>
@@ -208,15 +218,45 @@
         </div>
     </div>
 
+    <div id="view-read" class="view-container hidden-view z-40 bg-white">
+        <div class="flex justify-between items-center mt-8 mb-6">
+            <button onclick="navigate('result')" class="w-10 h-10 rounded-full bg-gray-50 shadow flex items-center justify-center"><i class="fas fa-arrow-left"></i></button>
+            <h2 class="font-black text-lg uppercase tracking-wider text-gray-400">Fiche Recette</h2>
+            <div class="w-10"></div>
+        </div>
+        <div id="read-content" class="pb-20">
+            </div>
+    </div>
+
     <div id="view-cook" class="view-container hidden-view z-30">
         <div class="flex justify-between items-center mt-8 mb-6">
             <button onclick="navigate('result')" class="w-10 h-10 rounded-full bg-white shadow flex items-center justify-center"><i class="fas fa-arrow-left"></i></button>
-            <div class="flex flex-col items-center"><span class="text-xs font-bold uppercase tracking-widest text-brand">En cuisine</span><span class="text-[10px] text-green-500 font-bold bg-green-100 px-2 rounded-full mt-1">💡 Écran actif</span></div>
+            <div class="flex flex-col items-center">
+                <span class="text-xs font-bold uppercase tracking-widest text-brand">En cuisine</span>
+                <span id="cook-timer-badge" class="text-[10px] font-bold bg-orange-100 text-orange-700 px-2 rounded-full mt-1">-- min</span>
+            </div>
             <div class="w-10"></div>
         </div>
-        <div class="mb-6"><h1 id="cook-title" class="text-3xl font-black text-gray-900 mb-2">Plat</h1><div class="flex gap-2"><span id="cook-time" class="text-sm font-bold bg-orange-100 text-orange-700 px-2 py-1 rounded">-- min</span></div></div>
-        <div class="mb-8"><h3 class="font-bold text-lg mb-4 flex items-center gap-2"><i class="fas fa-shopping-basket text-gray-400"></i> Ingrédients</h3><div id="cook-ing-list" class="space-y-3"></div></div>
-        <div><h3 class="font-bold text-lg mb-4 flex items-center gap-2"><i class="fas fa-list-ol text-gray-400"></i> Étapes</h3><div id="cook-steps-list" class="space-y-4"></div></div>
+        
+        <h1 id="cook-title" class="text-3xl font-black text-center text-gray-900 mb-8 leading-tight">Plat</h1>
+
+        <div class="mb-8">
+            <h3 class="font-bold text-lg mb-4 flex items-center gap-2 text-gray-800">
+                <i class="fas fa-shopping-basket text-brand"></i> Ingrédients
+            </h3>
+            <div id="cook-ing-list" class="grid grid-cols-2 gap-3">
+                </div>
+        </div>
+
+        <div class="border-t border-gray-200 my-6"></div>
+
+        <div>
+            <h3 class="font-bold text-lg mb-6 flex items-center gap-2 text-gray-800">
+                <i class="fas fa-fire text-brand"></i> Préparation
+            </h3>
+            <div id="cook-steps-list" class="space-y-0 pl-2">
+                </div>
+        </div>
         <div class="h-20"></div>
     </div>
 
