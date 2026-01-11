@@ -103,6 +103,7 @@ function resetCookingStats() {
         userStats.total = 0;
         saveData();
         alert("Compteur réinitialisé !");
+        updateStatsUI();
     }
 }
 
@@ -150,11 +151,21 @@ function initDataListener() {
     });
 }
 
-// --- AUTH ---
+// --- AUTH (CORRIGÉ POUR ÉVITER L'ERREUR SESSIONSTORAGE) ---
 function loginWithGoogle() {
-    auth.signInWithPopup(provider)
-        .then(() => { alert("Connexion réussie !"); toggleSettings(); })
-        .catch((error) => { alert("Erreur Auth : " + error.message); });
+    // ON FORCE LA PERSISTANCE LOCALE AVANT DE SE CONNECTER
+    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+        .then(() => {
+            return auth.signInWithPopup(provider);
+        })
+        .then(() => { 
+            alert("Connexion réussie !"); 
+            toggleSettings(); 
+        })
+        .catch((error) => { 
+            console.error(error);
+            alert("Erreur Auth : " + error.message); 
+        });
 }
 
 function logout() {
@@ -231,7 +242,6 @@ function toggleFavorite() {
     updateFavIcon();
 }
 
-// --- LOGIQUE DE NAVIGATION (IMPÉRATIF POUR LE BOUTON +) ---
 function openAddMode() {
     editingRecipeId = null; 
     document.getElementById('form-title').textContent="Nouvelle Recette"; 
@@ -418,7 +428,6 @@ function updateStatsUI() {
     document.getElementById('badge-count').textContent = badgesUnlocked;
 }
 
-// CORRECTION BOUTON BADGES : DEFINITION GLOBALE
 function openBadges() {
     const list = document.getElementById('badges-list'); 
     list.innerHTML = ""; 
@@ -467,3 +476,21 @@ function openBadges() {
     
     document.getElementById('badges-modal').classList.remove('hidden');
 }
+
+function toggleImportModal() { document.getElementById('import-modal').classList.toggle('hidden'); }
+function addFridgeItem() { const input = document.getElementById('fridge-input'); const val = input.value.trim(); if(val && !fridgeIngredients.includes(val)) { fridgeIngredients.push(val); input.value = ""; renderFridgeTags(); } }
+function removeFridgeItem(val) { fridgeIngredients = fridgeIngredients.filter(i => i !== val); renderFridgeTags(); }
+function renderFridgeTags() { const div = document.getElementById('fridge-tags'); div.innerHTML = ""; fridgeIngredients.forEach(i => { div.innerHTML += `<button onclick="removeFridgeItem('${i}')" class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-bold flex items-center gap-2">${i} <i class="fas fa-times"></i></button>`; }); }
+function searchFridge() {
+    const resultsDiv = document.getElementById('fridge-results'); resultsDiv.innerHTML = "";
+    if(fridgeIngredients.length === 0) { resultsDiv.innerHTML = `<div class="text-center text-gray-400">Ajoute des ingrédients !</div>`; return; }
+    const matches = allRecipes.filter(r => r.i.some(recipeIng => fridgeIngredients.some(fridgeWord => recipeIng.toLowerCase().includes(fridgeWord.toLowerCase()))));
+    if(matches.length === 0) { resultsDiv.innerHTML = `<div class="text-center text-gray-400">Aucune recette trouvée... 🍳</div>`; } else { renderCookbookList(matches, 'fridge-results'); }
+}
+function shareRecipe() {
+    if(!currentRecipe) return;
+    const text = `👨‍🍳 Je vais cuisiner : ${currentRecipe.t} (${currentRecipe.time}min).\nIl faut : ${currentRecipe.i.join(', ')}.`;
+    if(navigator.share) { navigator.share({title: 'FoodMood', text: text}); } else { navigator.clipboard.writeText(text); alert("Copié dans le presse-papier !"); }
+}
+async function requestWakeLock() { try { if ('wakeLock' in navigator) { wakeLock = await navigator.wakeLock.request('screen'); } } catch (err) {} }
+async function releaseWakeLock() { if (wakeLock !== null) { await wakeLock.release(); wakeLock = null; } }
