@@ -2,6 +2,8 @@
 const firebaseConfig = {
     apiKey: "AIzaSyAi1MFx5KuzPcpKKMtursIxMUV4MqQs7Nc",
     authDomain: "foodmood-5c124.firebaseapp.com",
+    // AJOUT IMPORTANT : L'adresse de la base de données
+    databaseURL: "https://foodmood-5c124-default-rtdb.firebaseio.com", 
     projectId: "foodmood-5c124",
     storageBucket: "foodmood-5c124.firebasestorage.app",
     messagingSenderId: "814046730378",
@@ -31,15 +33,17 @@ let wakeLock = null;
 
 // --- INIT APP ---
 document.addEventListener('DOMContentLoaded', () => { 
-    // 1. CHARGEMENT LOCAL
+    // 1. Charger le local pour l'instantanéité
     loadLocalData();
-    // 2. Navigation
+    // 2. Naviguer
     navigate('home');
-    // 3. Cloud
+    // 3. Connecter le Cloud
     auth.onAuthStateChanged((user) => {
         currentUser = user;
         updateAuthUI();
-        initDataListener();
+        if(user) {
+            initDataListener(); // Récupérer les données du cloud
+        }
     });
 });
 
@@ -58,10 +62,16 @@ function saveData() {
     // 2. Refresh UI
     updateStatsUI();
 
-    // 3. Sauvegarde Cloud
-    const uid = currentUser ? currentUser.uid : localStorage.getItem('foodmood_guest_id');
-    if(uid) {
-        db.ref(`users/${uid}`).update(localData).catch(e => console.warn("Cloud offline", e));
+    // 3. Sauvegarde Cloud (Si connecté)
+    if(currentUser) {
+        db.ref('users/' + currentUser.uid).set(localData)
+          .then(() => {
+              console.log("Sauvegarde Cloud réussie ✅");
+          })
+          .catch((error) => {
+              console.error("Erreur Cloud ❌", error);
+              alert("Erreur sauvegarde Cloud: " + error.message);
+          });
     }
 }
 
@@ -80,22 +90,32 @@ function loadLocalData() {
 }
 
 function initDataListener() {
-    const uid = currentUser ? currentUser.uid : (localStorage.getItem('foodmood_guest_id') || 'guest_' + Date.now());
-    if (!currentUser) localStorage.setItem('foodmood_guest_id', uid);
+    if (!currentUser) return;
 
-    const userRef = db.ref('users/' + uid);
+    const userRef = db.ref('users/' + currentUser.uid);
 
     userRef.on('value', (snapshot) => {
         const data = snapshot.val();
+        
+        // Si des données existent sur le cloud
         if(data) {
-            // Si local vide et cloud plein, on récupère
-            if(allRecipes.length === 0 && data.recipes) {
+            console.log("Données reçues du Cloud 📥");
+            
+            // Si le cloud a plus de recettes que le local (ex: changement de téléphone), on prend le cloud
+            if((data.recipes && data.recipes.length > allRecipes.length) || allRecipes.length === 0) {
                 allRecipes = data.recipes || [];
                 favorites = data.fav || [];
                 if(data.tags) userTags = data.tags;
                 if(data.stats) userStats = data.stats;
+                
+                // On met à jour le backup local avec les données fraîches du cloud
                 localStorage.setItem('foodmood_backup', JSON.stringify(data));
                 updateStatsUI();
+                
+                // Si on est dans le livre, on rafraichit
+                if(document.getElementById('view-cookbook').classList.contains('active-view')) {
+                    filterCookbook();
+                }
             }
         }
     });
@@ -104,12 +124,18 @@ function initDataListener() {
 // --- AUTHENTIFICATION ---
 function loginWithGoogle() {
     auth.signInWithPopup(provider)
-        .then(() => { alert("Connecté !"); toggleSettings(); })
+        .then(() => { 
+            alert("Connecté ! Les données vont se synchroniser."); 
+            toggleSettings(); 
+        })
         .catch((error) => { console.error(error); alert("Erreur connexion : " + error.message); });
 }
 
 function logout() {
-    auth.signOut().then(() => { alert("Déconnecté."); location.reload(); });
+    auth.signOut().then(() => { 
+        alert("Déconnecté."); 
+        location.reload(); 
+    });
 }
 
 function updateAuthUI() {
@@ -260,7 +286,7 @@ function navigate(viewName) {
     
     if(viewName === 'home') document.getElementById('nav-home').classList.add('active');
     if(viewName === 'cookbook') document.getElementById('nav-book').classList.add('active');
-    // Shop supprimé
+    
     if(viewName === 'cook') { requestWakeLock(); } else { releaseWakeLock(); }
 }
 function findRecipeByCat(cat) { activeCategoryTarget = cat; rollDice(); navigate('result'); }
@@ -271,7 +297,6 @@ function rollDice() {
     }
     if(filtered.length === 0) { 
         alert("Aucune recette ici ! Ajoute-en une avec le bouton +"); 
-        // return;  <-- Supprimé pour forcer le résultat vide ou gérer autrement ? Non, on reste sur home
         return; 
     }
     currentRecipe = filtered[Math.floor(Math.random() * filtered.length)];
