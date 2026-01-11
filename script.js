@@ -1,13 +1,12 @@
-// --- CONFIG FIREBASE ---
+// --- CONFIG FIREBASE (TA CONFIG EUROPE) ---
 const firebaseConfig = {
-    apiKey: "AIzaSyAi1MFx5KuzPcpKKMtursIxMUV4MqQs7Nc",
-    authDomain: "foodmood-5c124.firebaseapp.com",
-    // AJOUT IMPORTANT : L'adresse de la base de données
-    databaseURL: "https://foodmood-5c124-default-rtdb.europe-west1.firebasedatabase.app", 
-    projectId: "foodmood-5c124",
-    storageBucket: "foodmood-5c124.firebasestorage.app",
-    messagingSenderId: "814046730378",
-    appId: "1:814046730378:web:d220254af588891593b573"
+  apiKey: "AIzaSyAi1MFx5KuzPcpKKMtursIxMUV4MqQs7Nc",
+  authDomain: "foodmood-5c124.firebaseapp.com",
+  databaseURL: "https://foodmood-5c124-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "foodmood-5c124",
+  storageBucket: "foodmood-5c124.firebasestorage.app",
+  messagingSenderId: "814046730378",
+  appId: "1:814046730378:web:d220254af588891593b573"
 };
 
 // INITIALISATION
@@ -20,9 +19,9 @@ const provider = new firebase.auth.GoogleAuthProvider();
 let currentUser = null; 
 let allRecipes = []; 
 let favorites = [];
-let fridgeIngredients = []; 
 let userTags = ["Végétarien", "Sans Gluten", "Épicé"]; 
 let userStats = { total:0, healthy:0, fast:0, comfort:0, patisserie:0, cheap:0, exp:0, starter:0, dessert:0, aperitif:0, night:0, morning:0, weekend:0, imported:0, created:0, seasonal:0 }; 
+let fridgeIngredients = []; 
 let currentRecipe = null;
 let activeCategoryTarget = null;
 let editingRecipeId = null;
@@ -33,24 +32,27 @@ let wakeLock = null;
 
 // --- INIT APP ---
 document.addEventListener('DOMContentLoaded', () => { 
-    // 1. Charger le local pour l'instantanéité
+    // Chargement Local
     loadLocalData();
-    // 2. Naviguer
     navigate('home');
-    // 3. Connecter le Cloud
+    
+    // Écoute Auth
     auth.onAuthStateChanged((user) => {
         currentUser = user;
         updateAuthUI();
         if(user) {
-            initDataListener(); // Récupérer les données du cloud
+            console.log("Utilisateur connecté : " + user.email);
+            initDataListener(); // On lance l'écoute
+        } else {
+            console.log("Aucun utilisateur connecté.");
         }
     });
 });
 
-// --- GESTION DES DONNÉES (HYBRIDE) ---
+// --- COEUR DU SYSTÈME : SAUVEGARDE ---
 
 function saveData() {
-    // 1. Sauvegarde Local (Phone)
+    // 1. Sauvegarde Local (Phone) - Toujours actif
     const localData = {
         recipes: allRecipes,
         fav: favorites,
@@ -58,20 +60,23 @@ function saveData() {
         stats: userStats
     };
     localStorage.setItem('foodmood_backup', JSON.stringify(localData));
-    
-    // 2. Refresh UI
     updateStatsUI();
 
-    // 3. Sauvegarde Cloud (Si connecté)
+    // 2. Sauvegarde Cloud (Firebase)
     if(currentUser) {
+        // On force l'écriture
         db.ref('users/' + currentUser.uid).set(localData)
           .then(() => {
-              console.log("Sauvegarde Cloud réussie ✅");
+              // SUCCÈS : Si tu vois ça, c'est que c'est dans Firebase
+              console.log("✅ CLOUD : Sauvegarde réussie !");
           })
           .catch((error) => {
-              console.error("Erreur Cloud ❌", error);
-              alert("Erreur sauvegarde Cloud: " + error.message);
+              // ERREUR : Si tu vois ça, c'est un problème de droits ou de réseau
+              console.error("❌ CLOUD ERREUR :", error);
+              alert("Erreur Firebase : " + error.message);
           });
+    } else {
+        console.log("⚠️ Pas connecté, sauvegarde uniquement locale.");
     }
 }
 
@@ -85,38 +90,32 @@ function loadLocalData() {
             userTags = data.tags || ["Végétarien", "Sans Gluten", "Épicé"];
             userStats = data.stats || userStats;
             updateStatsUI();
-        } catch(e) { console.error("Backup error", e); }
+        } catch(e) { console.error("Erreur backup local", e); }
     }
 }
 
 function initDataListener() {
     if (!currentUser) return;
 
+    // On écoute ce dossier spécifique
     const userRef = db.ref('users/' + currentUser.uid);
 
     userRef.on('value', (snapshot) => {
         const data = snapshot.val();
         
-        // Si des données existent sur le cloud
         if(data) {
-            console.log("Données reçues du Cloud 📥");
-            
-            // Si le cloud a plus de recettes que le local (ex: changement de téléphone), on prend le cloud
-            if((data.recipes && data.recipes.length > allRecipes.length) || allRecipes.length === 0) {
+            console.log("📥 Données reçues du Cloud !");
+            // Si le cloud contient des données et qu'on a moins en local (cas changement téléphone)
+            if(allRecipes.length === 0 && data.recipes) {
                 allRecipes = data.recipes || [];
                 favorites = data.fav || [];
                 if(data.tags) userTags = data.tags;
                 if(data.stats) userStats = data.stats;
-                
-                // On met à jour le backup local avec les données fraîches du cloud
                 localStorage.setItem('foodmood_backup', JSON.stringify(data));
                 updateStatsUI();
-                
-                // Si on est dans le livre, on rafraichit
-                if(document.getElementById('view-cookbook').classList.contains('active-view')) {
-                    filterCookbook();
-                }
             }
+        } else {
+            console.log("🤷‍♂️ Aucune donnée trouvée sur le Cloud pour cet utilisateur.");
         }
     });
 }
@@ -125,17 +124,14 @@ function initDataListener() {
 function loginWithGoogle() {
     auth.signInWithPopup(provider)
         .then(() => { 
-            alert("Connecté ! Les données vont se synchroniser."); 
+            alert("Connexion réussie !"); 
             toggleSettings(); 
         })
-        .catch((error) => { console.error(error); alert("Erreur connexion : " + error.message); });
+        .catch((error) => { alert("Erreur Auth : " + error.message); });
 }
 
 function logout() {
-    auth.signOut().then(() => { 
-        alert("Déconnecté."); 
-        location.reload(); 
-    });
+    auth.signOut().then(() => { alert("Déconnecté."); location.reload(); });
 }
 
 function updateAuthUI() {
@@ -168,11 +164,7 @@ function addNewTag() {
         renderTagsInForm(); 
     }
 }
-function removeTag(tag) { 
-    userTags = userTags.filter(t => t !== tag); 
-    saveData(); 
-    renderSettingsTags(); 
-}
+function removeTag(tag) { userTags = userTags.filter(t => t !== tag); saveData(); renderSettingsTags(); }
 
 function renderTagsInForm(selectedTags = []) {
     const div = document.getElementById('add-tags-container'); 
@@ -195,8 +187,14 @@ function toggleFavorite() {
     updateFavIcon();
 }
 
-// --- SAUVEGARDE RECETTE ---
 function saveRecipe() {
+    if (!currentUser) {
+        // ALERTE SI NON CONNECTÉ
+        if(!confirm("Tu n'es pas connecté ! La recette sera sauvée sur le téléphone mais PAS sur le Cloud. Continuer ?")) {
+            return;
+        }
+    }
+
     const title = document.getElementById('add-title').value;
     const ingText = document.getElementById('add-ing').value;
     if(!title || !ingText) { alert("Champs obligatoires !"); return; }
@@ -228,7 +226,9 @@ function saveRecipe() {
         userStats.created++;
     }
     
+    // SAUVEGARDE GENERALE
     saveData();
+    
     currentRecipe = recipeData;
     navigate('result'); 
     editingRecipeId = null;
@@ -247,7 +247,6 @@ function updateStatsOnClick() {
     if(!currentRecipe) return;
     const cat = currentRecipe.cat || 'main';
     if(userStats[cat] !== undefined) userStats[cat]++;
-    
     saveData();
 }
 
