@@ -18,7 +18,6 @@ const provider = new firebase.auth.GoogleAuthProvider();
 let currentUser = null; 
 let allRecipes = []; 
 let favorites = [];
-let shoppingList = [];
 let fridgeIngredients = []; 
 let userTags = ["Végétarien", "Sans Gluten", "Épicé"]; 
 let userStats = { total:0, healthy:0, fast:0, comfort:0, patisserie:0, cheap:0, exp:0, starter:0, dessert:0, aperitif:0, night:0, morning:0, weekend:0, imported:0, created:0, seasonal:0 }; 
@@ -32,45 +31,40 @@ let wakeLock = null;
 
 // --- INIT APP ---
 document.addEventListener('DOMContentLoaded', () => { 
-    // 1. CHARGEMENT LOCAL IMMÉDIAT (Pour ne rien perdre)
+    // 1. CHARGEMENT LOCAL
     loadLocalData();
-    
-    // 2. Navigation vers l'accueil
+    // 2. Navigation
     navigate('home');
-    
-    // 3. Connexion au Cloud en arrière-plan
+    // 3. Cloud
     auth.onAuthStateChanged((user) => {
         currentUser = user;
         updateAuthUI();
-        initDataListener(); // Va essayer de récupérer du cloud pour fusionner
+        initDataListener();
     });
 });
 
-// --- GESTION DES DONNÉES (COEUR DU SYSTÈME) ---
+// --- GESTION DES DONNÉES (HYBRIDE) ---
 
-// Sauvegarde Hybride : Local + Cloud
 function saveData() {
-    // 1. Sauvegarde dans le téléphone (Indestructible)
+    // 1. Sauvegarde Local (Phone)
     const localData = {
         recipes: allRecipes,
         fav: favorites,
-        shop: shoppingList,
         tags: userTags,
         stats: userStats
     };
     localStorage.setItem('foodmood_backup', JSON.stringify(localData));
     
-    // 2. Mise à jour de l'affichage
+    // 2. Refresh UI
     updateStatsUI();
 
-    // 3. Envoi au Cloud (Si possible)
+    // 3. Sauvegarde Cloud
     const uid = currentUser ? currentUser.uid : localStorage.getItem('foodmood_guest_id');
     if(uid) {
-        db.ref(`users/${uid}`).update(localData).catch(e => console.warn("Cloud non dispo, mais sauvegardé en local.", e));
+        db.ref(`users/${uid}`).update(localData).catch(e => console.warn("Cloud offline", e));
     }
 }
 
-// Chargement Local
 function loadLocalData() {
     const backup = localStorage.getItem('foodmood_backup');
     if(backup) {
@@ -78,15 +72,13 @@ function loadLocalData() {
             const data = JSON.parse(backup);
             allRecipes = data.recipes || [];
             favorites = data.fav || [];
-            shoppingList = data.shop || [];
             userTags = data.tags || ["Végétarien", "Sans Gluten", "Épicé"];
             userStats = data.stats || userStats;
-            updateStatsUI(); // Affiche les chiffres tout de suite
-        } catch(e) { console.error("Erreur lecture backup local", e); }
+            updateStatsUI();
+        } catch(e) { console.error("Backup error", e); }
     }
 }
 
-// Chargement Cloud (Écouteur)
 function initDataListener() {
     const uid = currentUser ? currentUser.uid : (localStorage.getItem('foodmood_guest_id') || 'guest_' + Date.now());
     if (!currentUser) localStorage.setItem('foodmood_guest_id', uid);
@@ -96,19 +88,14 @@ function initDataListener() {
     userRef.on('value', (snapshot) => {
         const data = snapshot.val();
         if(data) {
-            // On récupère du cloud SEULEMENT si c'est plus récent ou complet
-            // Pour simplifier ici, on fusionne ou on remplace si le local est vide
+            // Si local vide et cloud plein, on récupère
             if(allRecipes.length === 0 && data.recipes) {
                 allRecipes = data.recipes || [];
                 favorites = data.fav || [];
-                shoppingList = data.shop || [];
                 if(data.tags) userTags = data.tags;
                 if(data.stats) userStats = data.stats;
-                
-                // On met à jour le local avec ce qu'on a trouvé dans le cloud
                 localStorage.setItem('foodmood_backup', JSON.stringify(data));
                 updateStatsUI();
-                renderShoppingList();
             }
         }
     });
@@ -149,7 +136,7 @@ function addNewTag() {
     const val = input.value.trim();
     if(val && !userTags.includes(val)) { 
         userTags.push(val); 
-        saveData(); // Sauvegarde
+        saveData(); 
         input.value = "";
         renderSettingsTags();
         renderTagsInForm(); 
@@ -157,17 +144,15 @@ function addNewTag() {
 }
 function removeTag(tag) { 
     userTags = userTags.filter(t => t !== tag); 
-    saveData(); // Sauvegarde
+    saveData(); 
     renderSettingsTags(); 
 }
 
-// RENDU DES TAGS DANS LE FORMULAIRE (Fonctionne avec le CSS peer-checked)
 function renderTagsInForm(selectedTags = []) {
     const div = document.getElementById('add-tags-container'); 
     div.innerHTML = "";
     userTags.forEach(t => { 
         const isChecked = selectedTags.includes(t);
-        // L'astuce : on utilise une classe simple ici, le CSS peer-checked dans le HTML s'occupe de la couleur
         div.innerHTML += `
         <label class="cursor-pointer select-none border border-gray-200 text-gray-500 px-3 py-1 rounded-full text-xs font-bold transition flex items-center gap-1 has-[:checked]:border-brand has-[:checked]:bg-orange-50 has-[:checked]:text-brand">
             <input type="checkbox" value="${t}" class="hidden" ${isChecked ? "checked" : ""}>
@@ -180,20 +165,9 @@ function toggleFavorite() {
     if(!currentRecipe) return;
     const idx = favorites.indexOf(currentRecipe.id);
     if(idx === -1) { favorites.push(currentRecipe.id); } else { favorites.splice(idx, 1); }
-    saveData(); // Sauvegarde
+    saveData(); 
     updateFavIcon();
 }
-
-function addShopItemManually() {
-    const val = document.getElementById('shop-input').value;
-    if(val) { shoppingList.push({t: val, done: false}); saveData(); document.getElementById('shop-input').value = ""; renderShoppingList(); }
-}
-function toggleShopItem(idx) { 
-    shoppingList[idx].done = !shoppingList[idx].done; 
-    saveData(); 
-    renderShoppingList(); // Rafraîchissement visuel forcé
-}
-function clearShoppingList() { shoppingList = []; saveData(); renderShoppingList(); }
 
 // --- SAUVEGARDE RECETTE ---
 function saveRecipe() {
@@ -203,7 +177,6 @@ function saveRecipe() {
     
     let finalId = editingRecipeId ? editingRecipeId : Date.now();
     
-    // Récupération correcte des tags
     const selectedTags = [];
     document.querySelectorAll('#add-tags-container input:checked').forEach(cb => selectedTags.push(cb.value));
     
@@ -220,7 +193,6 @@ function saveRecipe() {
         tags: selectedTags
     };
 
-    // Mise à jour de la liste
     if(editingRecipeId) {
         const idx = allRecipes.findIndex(r => r.id === editingRecipeId);
         if(idx !== -1) allRecipes[idx] = recipeData;
@@ -230,9 +202,7 @@ function saveRecipe() {
         userStats.created++;
     }
     
-    // SAUVEGARDE GLOBALE
     saveData();
-    
     currentRecipe = recipeData;
     navigate('result'); 
     editingRecipeId = null;
@@ -242,21 +212,13 @@ function deleteCurrentRecipe() {
     if(!currentRecipe) return;
     if(confirm("Supprimer ?")) {
         allRecipes = allRecipes.filter(r => r.id !== currentRecipe.id);
-        saveData(); // Sauvegarde
+        saveData();
         navigate('home');
     }
 }
 
-function addAllToShop() {
-    if(!currentRecipe) return;
-    const scaledIng = getScaledIngredients(currentRecipe.i, currentPortion);
-    scaledIng.forEach(ing => shoppingList.push({t: ing, done: false}));
-    saveData(); alert("Ajouté au panier !"); renderShoppingList();
-}
-
 function updateStatsOnClick() {
     if(!currentRecipe) return;
-    // On incrémente juste pour les stats d'utilisation
     const cat = currentRecipe.cat || 'main';
     if(userStats[cat] !== undefined) userStats[cat]++;
     
@@ -295,9 +257,10 @@ function navigate(viewName) {
     document.getElementById(`view-${viewName}`).classList.remove('hidden-view');
     document.getElementById(`view-${viewName}`).classList.add('active-view');
     document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+    
     if(viewName === 'home') document.getElementById('nav-home').classList.add('active');
     if(viewName === 'cookbook') document.getElementById('nav-book').classList.add('active');
-    if(viewName === 'shop') document.getElementById('nav-shop').classList.add('active');
+    // Shop supprimé
     if(viewName === 'cook') { requestWakeLock(); } else { releaseWakeLock(); }
 }
 function findRecipeByCat(cat) { activeCategoryTarget = cat; rollDice(); navigate('result'); }
@@ -308,7 +271,7 @@ function rollDice() {
     }
     if(filtered.length === 0) { 
         alert("Aucune recette ici ! Ajoute-en une avec le bouton +"); 
-        // Pas de navigation pour laisser l'user sur l'accueil
+        // return;  <-- Supprimé pour forcer le résultat vide ou gérer autrement ? Non, on reste sur home
         return; 
     }
     currentRecipe = filtered[Math.floor(Math.random() * filtered.length)];
@@ -450,33 +413,10 @@ function toggleSettings() { document.getElementById('settings-modal').classList.
 function cancelEdit() { if(editingRecipeId) navigate('result'); else navigate('home'); resetForm(); editingRecipeId = null; }
 function resetForm() { document.getElementById('add-title').value=""; document.getElementById('add-ing').value=""; document.getElementById('add-steps').value=""; }
 function toggleTagFilter(tag) { if(activeTagFilter === tag) activeTagFilter = null; else activeTagFilter = tag; renderCookbookTagsFilter(); filterCookbook(); }
-function clearShoppingList() { shoppingList = []; saveData(); renderShoppingList(); }
-function renderShoppingList() {
-    const container = document.getElementById('shopping-list'); container.innerHTML = "";
-    if(shoppingList.length === 0) { container.innerHTML = "<div class='text-center text-gray-400 mt-10'>Panier vide 🛒</div>"; return; }
-    const groups = {};
-    const getCat = (name) => {
-        const n = name.toLowerCase();
-        if(['pomme','poire','banane','citron','orange','fraise','kiwi','tomate','salade','oignon','ail','échalote','carotte','courgette','poivron','champignon','avocat','concombre','pomme de terre','haricot','épinard','légume'].some(x=>n.includes(x))) return '🥬 Fruits & Légumes';
-        if(['poulet','boeuf','porc','jambon','lardons','saucisse','steak','haché','bacon','thon','saumon','crevette','poisson'].some(x=>n.includes(x))) return '🥩 Viandes & Poissons';
-        if(['lait','beurre','crème','yaourt','fromage','oeuf','emmental','mozzarella','parmesan','cheddar'].some(x=>n.includes(x))) return '🥛 Frais & Crèmerie';
-        return '🍝 Épicerie';
-    };
-    shoppingList.forEach((item, idx) => {
-        const cat = getCat(item.t); if(!groups[cat]) groups[cat] = []; groups[cat].push({ ...item, originalIdx: idx });
-    });
-    Object.keys(groups).sort().forEach(cat => {
-        container.innerHTML += `<h3 class="text-xs font-black text-gray-400 uppercase tracking-widest mt-4 mb-2 ml-1">${cat}</h3>`;
-        groups[cat].forEach(item => {
-            container.innerHTML += `<div onclick="toggleShopItem(${item.originalIdx})" class="bg-white p-3 rounded-xl border border-gray-100 flex items-center gap-3 active:scale-[0.98] transition cursor-pointer mb-2"><div class="w-5 h-5 rounded border ${item.done?'bg-brand border-brand':'border-gray-300'} flex items-center justify-center">${item.done?'<i class="fas fa-check text-white text-xs"></i>':''}</div><span class="${item.done?'line-through text-gray-400':'text-gray-800'} font-medium">${item.t}</span></div>`;
-        });
-    });
-}
 function updateStatsUI() {
     document.getElementById('total-recipes').textContent = allRecipes.length;
-    document.getElementById('user-recipes-count').textContent = allRecipes.length; // Tout est "création"
+    document.getElementById('user-recipes-count').textContent = allRecipes.length;
     
-    // BADGES
     let badgesUnlocked = 0; 
     const BADGES = [
         { id: 'first_cook', icon: '🐣', title: 'Premier Pas', desc: 'Cuisiner 1 recette', cond: (s) => s.total >= 1 },
