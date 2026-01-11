@@ -32,27 +32,21 @@ let wakeLock = null;
 
 // --- INIT APP ---
 document.addEventListener('DOMContentLoaded', () => { 
-    // Chargement Local
     loadLocalData();
     navigate('home');
     
-    // Écoute Auth
     auth.onAuthStateChanged((user) => {
         currentUser = user;
         updateAuthUI();
         if(user) {
-            console.log("Utilisateur connecté : " + user.email);
-            initDataListener(); // On lance l'écoute
-        } else {
-            console.log("Aucun utilisateur connecté.");
+            initDataListener();
         }
     });
 });
 
-// --- COEUR DU SYSTÈME : SAUVEGARDE ---
+// --- SAUVEGARDE ---
 
 function saveData() {
-    // 1. Sauvegarde Local (Phone) - Toujours actif
     const localData = {
         recipes: allRecipes,
         fav: favorites,
@@ -62,21 +56,10 @@ function saveData() {
     localStorage.setItem('foodmood_backup', JSON.stringify(localData));
     updateStatsUI();
 
-    // 2. Sauvegarde Cloud (Firebase)
     if(currentUser) {
-        // On force l'écriture
         db.ref('users/' + currentUser.uid).set(localData)
-          .then(() => {
-              // SUCCÈS : Si tu vois ça, c'est que c'est dans Firebase
-              console.log("✅ CLOUD : Sauvegarde réussie !");
-          })
-          .catch((error) => {
-              // ERREUR : Si tu vois ça, c'est un problème de droits ou de réseau
-              console.error("❌ CLOUD ERREUR :", error);
-              alert("Erreur Firebase : " + error.message);
-          });
-    } else {
-        console.log("⚠️ Pas connecté, sauvegarde uniquement locale.");
+          .then(() => console.log("✅ CLOUD : Sauvegarde réussie !"))
+          .catch((error) => console.error("❌ CLOUD ERREUR :", error));
     }
 }
 
@@ -96,16 +79,10 @@ function loadLocalData() {
 
 function initDataListener() {
     if (!currentUser) return;
-
-    // On écoute ce dossier spécifique
     const userRef = db.ref('users/' + currentUser.uid);
-
     userRef.on('value', (snapshot) => {
         const data = snapshot.val();
-        
         if(data) {
-            console.log("📥 Données reçues du Cloud !");
-            // Si le cloud contient des données et qu'on a moins en local (cas changement téléphone)
             if(allRecipes.length === 0 && data.recipes) {
                 allRecipes = data.recipes || [];
                 favorites = data.fav || [];
@@ -114,19 +91,14 @@ function initDataListener() {
                 localStorage.setItem('foodmood_backup', JSON.stringify(data));
                 updateStatsUI();
             }
-        } else {
-            console.log("🤷‍♂️ Aucune donnée trouvée sur le Cloud pour cet utilisateur.");
         }
     });
 }
 
-// --- AUTHENTIFICATION ---
+// --- AUTH ---
 function loginWithGoogle() {
     auth.signInWithPopup(provider)
-        .then(() => { 
-            alert("Connexion réussie !"); 
-            toggleSettings(); 
-        })
+        .then(() => { alert("Connexion réussie !"); toggleSettings(); })
         .catch((error) => { alert("Erreur Auth : " + error.message); });
 }
 
@@ -151,7 +123,7 @@ function updateAuthUI() {
     }
 }
 
-// --- LOGIQUE MÉTIER ---
+// --- LOGIQUE ---
 
 function addNewTag() {
     const input = document.getElementById('new-tag-input');
@@ -188,13 +160,7 @@ function toggleFavorite() {
 }
 
 function saveRecipe() {
-    if (!currentUser) {
-        // ALERTE SI NON CONNECTÉ
-        if(!confirm("Tu n'es pas connecté ! La recette sera sauvée sur le téléphone mais PAS sur le Cloud. Continuer ?")) {
-            return;
-        }
-    }
-
+    if (!currentUser) { if(!confirm("Tu n'es pas connecté ! Sauvegarde locale uniquement. Continuer ?")) return; }
     const title = document.getElementById('add-title').value;
     const ingText = document.getElementById('add-ing').value;
     if(!title || !ingText) { alert("Champs obligatoires !"); return; }
@@ -222,13 +188,11 @@ function saveRecipe() {
         if(idx !== -1) allRecipes[idx] = recipeData;
     } else { 
         allRecipes.push(recipeData); 
-        userStats.total++;
-        userStats.created++;
+        userStats.total++; // On garde quand même total pour les stats
+        // On n'incrémente plus userStats.created ici de façon système, ça dépend des tags
     }
     
-    // SAUVEGARDE GENERALE
     saveData();
-    
     currentRecipe = recipeData;
     navigate('result'); 
     editingRecipeId = null;
@@ -247,6 +211,7 @@ function updateStatsOnClick() {
     if(!currentRecipe) return;
     const cat = currentRecipe.cat || 'main';
     if(userStats[cat] !== undefined) userStats[cat]++;
+    userStats.total++; // Compteur global de cuisine
     saveData();
 }
 
@@ -285,7 +250,6 @@ function navigate(viewName) {
     
     if(viewName === 'home') document.getElementById('nav-home').classList.add('active');
     if(viewName === 'cookbook') document.getElementById('nav-book').classList.add('active');
-    
     if(viewName === 'cook') { requestWakeLock(); } else { releaseWakeLock(); }
 }
 function findRecipeByCat(cat) { activeCategoryTarget = cat; rollDice(); navigate('result'); }
@@ -294,10 +258,7 @@ function rollDice() {
     if (activeCategoryTarget && activeCategoryTarget !== 'all') {
         filtered = allRecipes.filter(r => r.cat === activeCategoryTarget);
     }
-    if(filtered.length === 0) { 
-        alert("Aucune recette ici ! Ajoute-en une avec le bouton +"); 
-        return; 
-    }
+    if(filtered.length === 0) { alert("Aucune recette ici ! Ajoute-en une avec le bouton +"); return; }
     currentRecipe = filtered[Math.floor(Math.random() * filtered.length)];
     renderResult(currentRecipe);
 }
@@ -421,9 +382,45 @@ function openBadges() {
     const BADGES = [
         { id: 'first_cook', icon: '🐣', title: 'Premier Pas', desc: 'Cuisiner 1 recette', cond: (s) => s.total >= 1 },
         { id: 'chef_5', icon: '👨‍🍳', title: 'Apprenti', desc: 'Cuisiner 5 recettes', cond: (s) => s.total >= 5 },
+        { id: 'chef_10', icon: '🔪', title: 'Commis', desc: 'Cuisiner 10 recettes', cond: (s) => s.total >= 10 },
         { id: 'chef_20', icon: '🔥', title: 'Sous-Chef', desc: 'Cuisiner 20 recettes', cond: (s) => s.total >= 20 },
+        { id: 'chef_50', icon: '🎩', title: 'Chef de Partie', desc: 'Cuisiner 50 recettes', cond: (s) => s.total >= 50 },
+        { id: 'master', icon: '🏆', title: 'Chef Exécutif', desc: '100 recettes cuisinées', cond: (s) => s.total >= 100 },
+        { id: 'legend', icon: '🌟', title: 'Trois Étoiles', desc: '500 recettes cuisinées', cond: (s) => s.total >= 500 },
+        
+        { id: 'healthy_10', icon: '🥗', title: 'Healthy Life', desc: '10 recettes Healthy', cond: (s) => s.healthy >= 10 },
+        { id: 'healthy_50', icon: '🧘', title: 'Fitness Guru', desc: '50 recettes Healthy', cond: (s) => s.healthy >= 50 },
+        
+        { id: 'comfort_10', icon: '🍔', title: 'Gros Bidon', desc: '10 recettes Plaisir', cond: (s) => s.comfort >= 10 },
+        { id: 'comfort_50', icon: '🧸', title: 'Comfort King', desc: '50 recettes Plaisir', cond: (s) => s.comfort >= 50 },
+        
+        { id: 'fast_10', icon: '⚡', title: 'Speedy', desc: '10 recettes Rapides', cond: (s) => s.fast >= 10 },
+        { id: 'fast_50', icon: '🏎️', title: 'L\'Éclair', desc: '50 recettes Rapides', cond: (s) => s.fast >= 50 },
+        
+        { id: 'sweet_10', icon: '🧁', title: 'Bec Sucré', desc: '10 Pâtisseries', cond: (s) => s.patisserie >= 10 },
+        { id: 'sweet_50', icon: '🍫', title: 'Willy Wonka', desc: '50 Pâtisseries', cond: (s) => s.patisserie >= 50 },
+        
+        { id: 'cheap_10', icon: '💸', title: 'Économe', desc: '10 recettes Pas Chères', cond: (s) => s.cheap >= 10 },
+        { id: 'cheap_50', icon: '🏦', title: 'Picsou', desc: '50 recettes Pas Chères', cond: (s) => s.cheap >= 50 },
+        
+        { id: 'rich_5', icon: '💎', title: 'Luxe', desc: '5 recettes Chics', cond: (s) => s.exp >= 5 },
+        { id: 'rich_20', icon: '🤵', title: 'Gastronome', desc: '20 recettes Chics', cond: (s) => s.exp >= 20 },
+        
+        { id: 'starter_5', icon: '🥕', title: 'Mise en bouche', desc: '5 Entrées', cond: (s) => s.starter >= 5 },
+        { id: 'main_50', icon: '🍗', title: 'Grand Banquet', desc: '50 Plats', cond: (s) => s.main >= 50 }, // Note: Need to track 'main' in userStats logic if not present, assumed 'starter/main/dessert' logic
+        
+        { id: 'night_owl', icon: '🦉', title: 'Oiseau de Nuit', desc: 'Cuisiner après 22h', cond: (s) => s.night >= 1 },
+        { id: 'morning', icon: '☀️', title: 'Lève-tôt', desc: 'Cuisiner avant 10h', cond: (s) => s.morning >= 1 },
+        { id: 'weekend', icon: '🎉', title: 'Dimanche', desc: 'Cuisiner le weekend', cond: (s) => s.weekend >= 5 },
+        
         { id: 'importer', icon: '🌍', title: 'Explorateur', desc: 'Importer 1 recette', cond: (s) => s.imported >= 1 },
-        { id: 'master', icon: '🏆', title: 'Légende', desc: '100 recettes cuisinées', cond: (s) => s.total >= 100 }
+        { id: 'importer_50', icon: '🚢', title: 'Hacker', desc: 'Importer 50 recettes', cond: (s) => s.imported >= 50 },
+        
+        { id: 'creator_1', icon: '✍️', title: 'Créateur', desc: '1 recette avec tag Création', cond: () => allRecipes.some(r => r.tags && r.tags.includes('Création')) },
+        { id: 'creator_10', icon: '🎨', title: 'Artiste', desc: '10 recettes avec tag Création', cond: () => allRecipes.filter(r => r.tags && r.tags.includes('Création')).length >= 10 },
+        
+        { id: 'season', icon: '🍂', title: 'De Saison', desc: 'Cuisiner 5 fois de saison', cond: (s) => s.seasonal >= 5 },
+        { id: 'variety', icon: '🌈', title: 'Polyvalent', desc: 'Cuisiner 1 de chaque Mood', cond: (s) => s.healthy>0 && s.fast>0 && s.comfort>0 && s.patisserie>0 }
     ];
     BADGES.forEach(b => { const unlocked = b.cond(userStats); if(unlocked) unlockedCount++; list.innerHTML += `<div onclick="alert('${b.title} : ${b.desc}')" class="flex flex-col items-center justify-center p-3 rounded-2xl bg-gray-50 border ${unlocked ? 'border-purple-200 bg-purple-50' : 'border-gray-100'} ${unlocked ? '' : 'badge-locked'} cursor-pointer"><div class="text-3xl mb-1">${b.icon}</div><div class="text-[10px] font-bold text-center leading-tight ${unlocked ? 'text-purple-700' : 'text-gray-400'}">${b.title}</div></div>`; });
     document.getElementById('badge-count').textContent = unlockedCount; document.getElementById('badges-modal').classList.remove('hidden');
@@ -439,15 +436,29 @@ function resetForm() { document.getElementById('add-title').value=""; document.g
 function toggleTagFilter(tag) { if(activeTagFilter === tag) activeTagFilter = null; else activeTagFilter = tag; renderCookbookTagsFilter(); filterCookbook(); }
 function updateStatsUI() {
     document.getElementById('total-recipes').textContent = allRecipes.length;
-    document.getElementById('user-recipes-count').textContent = allRecipes.length;
+    
+    // NOUVEAUX COMPTEURS
+    const createdCount = allRecipes.filter(r => r.tags && r.tags.includes('Création')).length;
+    document.getElementById('created-recipes-count').textContent = createdCount;
+    
+    document.getElementById('fav-count').textContent = favorites.length;
+    document.getElementById('cooked-count').textContent = userStats.total;
     
     let badgesUnlocked = 0; 
     const BADGES = [
-        { id: 'first_cook', icon: '🐣', title: 'Premier Pas', desc: 'Cuisiner 1 recette', cond: (s) => s.total >= 1 },
-        { id: 'chef_5', icon: '👨‍🍳', title: 'Apprenti', desc: 'Cuisiner 5 recettes', cond: (s) => s.total >= 5 },
-        { id: 'chef_20', icon: '🔥', title: 'Sous-Chef', desc: 'Cuisiner 20 recettes', cond: (s) => s.total >= 20 },
-        { id: 'importer', icon: '🌍', title: 'Explorateur', desc: 'Importer 1 recette', cond: (s) => s.imported >= 1 },
-        { id: 'master', icon: '🏆', title: 'Légende', desc: '100 recettes cuisinées', cond: (s) => s.total >= 100 }
+        { cond: (s) => s.total >= 1 }, { cond: (s) => s.total >= 5 }, { cond: (s) => s.total >= 10 }, { cond: (s) => s.total >= 20 }, { cond: (s) => s.total >= 50 }, { cond: (s) => s.total >= 100 }, { cond: (s) => s.total >= 500 },
+        { cond: (s) => s.healthy >= 10 }, { cond: (s) => s.healthy >= 50 },
+        { cond: (s) => s.comfort >= 10 }, { cond: (s) => s.comfort >= 50 },
+        { cond: (s) => s.fast >= 10 }, { cond: (s) => s.fast >= 50 },
+        { cond: (s) => s.patisserie >= 10 }, { cond: (s) => s.patisserie >= 50 },
+        { cond: (s) => s.cheap >= 10 }, { cond: (s) => s.cheap >= 50 },
+        { cond: (s) => s.exp >= 5 }, { cond: (s) => s.exp >= 20 },
+        { cond: (s) => s.starter >= 5 }, { cond: (s) => s.main >= 50 },
+        { cond: (s) => s.night >= 1 }, { cond: (s) => s.morning >= 1 }, { cond: (s) => s.weekend >= 5 },
+        { cond: (s) => s.imported >= 1 }, { cond: (s) => s.imported >= 50 },
+        { cond: () => allRecipes.some(r => r.tags && r.tags.includes('Création')) },
+        { cond: () => allRecipes.filter(r => r.tags && r.tags.includes('Création')).length >= 10 },
+        { cond: (s) => s.seasonal >= 5 }, { cond: (s) => s.healthy>0 && s.fast>0 && s.comfort>0 && s.patisserie>0 }
     ];
     BADGES.forEach(b => { if(b.cond(userStats)) badgesUnlocked++; });
     document.getElementById('badge-count').textContent = badgesUnlocked;
