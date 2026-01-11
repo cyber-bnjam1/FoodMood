@@ -102,7 +102,7 @@ function openEditMode() {
     navigate('add');
 }
 
-// NOUVEAU : MODE LECTURE (VISUALISATION)
+// MODE LECTURE (VISUALISATION)
 function openReadMode() {
     if(!currentRecipe) return;
     const content = document.getElementById('read-content');
@@ -263,7 +263,7 @@ function updateAuthUI() {
     }
 }
 
-// --- CORE LOGIC ---
+// --- CORE LOGIC (CORRECTION DU BUG ICI) ---
 
 function saveRecipe() {
     if (!currentUser) { if(!confirm("Mode hors ligne. Continuer ?")) return; }
@@ -300,6 +300,7 @@ function saveRecipe() {
     
     saveData(); 
     currentRecipe = recipeData;
+    renderResult(currentRecipe); // <--- CORRECTION : On force l'affichage de la nouvelle recette
     navigate('result'); 
     editingRecipeId = null;
 }
