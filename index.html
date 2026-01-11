@@ -32,11 +32,11 @@
         .view-container { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
             overflow-y: auto; overflow-x: hidden;
-            padding: 20px; padding-bottom: 120px; /* Espace pour le menu bas */
+            padding: 20px; padding-bottom: 120px; 
             background: #FAFAFA; 
             transition: transform 0.25s ease-out, opacity 0.2s; 
             box-sizing: border-box;
-            z-index: 10; /* Niveau de base */
+            z-index: 10;
         }
         
         .hidden-view { transform: translateX(100vw); opacity: 0; pointer-events: none; }
@@ -188,9 +188,9 @@
                     <span id="res-price" class="bg-gray-100 px-3 py-1 rounded-lg text-xs font-bold text-gray-600 flex items-center gap-1">--</span>
                 </div>
                 <div class="flex items-center gap-4 mb-4 bg-orange-50 px-4 py-1 rounded-full border border-orange-100">
-                    <button onclick="changePortion(-1)" class="text-brand font-bold px-2">-</button>
-                    <span class="text-xs font-bold text-gray-600"><span id="portion-count">2</span> pers.</span>
-                    <button onclick="changePortion(1)" class="text-brand font-bold px-2">+</button>
+                    <button onclick="changePortion(-0.5)" class="text-brand font-bold px-2">-</button>
+                    <span class="text-xs font-bold text-gray-600">Qté x<span id="portion-count">1</span></span>
+                    <button onclick="changePortion(0.5)" class="text-brand font-bold px-2">+</button>
                 </div>
                 <div class="w-full border-t border-gray-100 pt-4">
                     <div class="flex justify-between items-end mb-2"><p class="text-[10px] uppercase font-bold text-gray-400">Ingrédients</p></div>
