@@ -64,7 +64,6 @@ function saveData() {
     }
 }
 
-// FONCTION MANUELLE DEMANDÉE
 function forceManualSync() {
     if(!currentUser) return alert("Connecte-toi d'abord !");
     
@@ -99,6 +98,15 @@ function forceManualSync() {
       });
 }
 
+// NOUVELLE FONCTION RESET
+function resetCookingStats() {
+    if(confirm("Remettre le compteur 'Cuisinés' à zéro ?")) {
+        userStats.total = 0;
+        saveData();
+        alert("Compteur réinitialisé !");
+    }
+}
+
 function loadLocalData() {
     const backup = localStorage.getItem('foodmood_backup');
     if(backup) {
@@ -120,14 +128,12 @@ function loadLocalData() {
     }
 }
 
-// CORRECTION MAJEURE : On accepte TOUJOURS les données du cloud si elles arrivent
 function initDataListener() {
     if (!currentUser) return;
     const userRef = db.ref('users/' + currentUser.uid);
     userRef.on('value', (snapshot) => {
         const data = snapshot.val();
         if(data) {
-            // ON ÉCRASE LE LOCAL PAR LE CLOUD (Source de vérité)
             allRecipes = data.recipes || [];
             favorites = data.fav || [];
             
@@ -464,4 +470,55 @@ function updateStatsUI() {
     ];
     BADGES.forEach(b => { if(b.cond(userStats)) badgesUnlocked++; });
     document.getElementById('badge-count').textContent = badgesUnlocked;
+}
+
+// CORRECTION BOUTON BADGES : RÉÉCRITURE ROBUSTE
+function openBadges() {
+    const list = document.getElementById('badges-list'); 
+    list.innerHTML = ""; 
+    
+    // Définition locale des badges pour éviter tout problème de portée
+    const BADGES = [
+        { id: 'first_cook', icon: '🐣', title: 'Premier Pas', desc: 'Cuisiner 1 recette', cond: (s) => s.total >= 1 },
+        { id: 'chef_5', icon: '👨‍🍳', title: 'Apprenti', desc: 'Cuisiner 5 recettes', cond: (s) => s.total >= 5 },
+        { id: 'chef_10', icon: '🔪', title: 'Commis', desc: 'Cuisiner 10 recettes', cond: (s) => s.total >= 10 },
+        { id: 'chef_20', icon: '🔥', title: 'Sous-Chef', desc: 'Cuisiner 20 recettes', cond: (s) => s.total >= 20 },
+        { id: 'chef_50', icon: '🎩', title: 'Chef de Partie', desc: 'Cuisiner 50 recettes', cond: (s) => s.total >= 50 },
+        { id: 'master', icon: '🏆', title: 'Chef Exécutif', desc: '100 recettes cuisinées', cond: (s) => s.total >= 100 },
+        { id: 'legend', icon: '🌟', title: 'Trois Étoiles', desc: '500 recettes cuisinées', cond: (s) => s.total >= 500 },
+        { id: 'healthy_10', icon: '🥗', title: 'Healthy Life', desc: '10 recettes Healthy', cond: (s) => s.healthy >= 10 },
+        { id: 'healthy_50', icon: '🧘', title: 'Fitness Guru', desc: '50 recettes Healthy', cond: (s) => s.healthy >= 50 },
+        { id: 'comfort_10', icon: '🍔', title: 'Gros Bidon', desc: '10 recettes Plaisir', cond: (s) => s.comfort >= 10 },
+        { id: 'comfort_50', icon: '🧸', title: 'Comfort King', desc: '50 recettes Plaisir', cond: (s) => s.comfort >= 50 },
+        { id: 'fast_10', icon: '⚡', title: 'Speedy', desc: '10 recettes Rapides', cond: (s) => s.fast >= 10 },
+        { id: 'fast_50', icon: '🏎️', title: 'L\'Éclair', desc: '50 recettes Rapides', cond: (s) => s.fast >= 50 },
+        { id: 'sweet_10', icon: '🧁', title: 'Bec Sucré', desc: '10 Pâtisseries', cond: (s) => s.patisserie >= 10 },
+        { id: 'sweet_50', icon: '🍫', title: 'Willy Wonka', desc: '50 Pâtisseries', cond: (s) => s.patisserie >= 50 },
+        { id: 'cheap_10', icon: '💸', title: 'Économe', desc: '10 recettes Pas Chères', cond: (s) => s.cheap >= 10 },
+        { id: 'cheap_50', icon: '🏦', title: 'Picsou', desc: '50 recettes Pas Chères', cond: (s) => s.cheap >= 50 },
+        { id: 'rich_5', icon: '💎', title: 'Luxe', desc: '5 recettes Chics', cond: (s) => s.exp >= 5 },
+        { id: 'rich_20', icon: '🤵', title: 'Gastronome', desc: '20 recettes Chics', cond: (s) => s.exp >= 20 },
+        { id: 'starter_5', icon: '🥕', title: 'Mise en bouche', desc: '5 Entrées', cond: (s) => s.starter >= 5 },
+        { id: 'main_50', icon: '🍗', title: 'Grand Banquet', desc: '50 Plats', cond: (s) => s.main >= 50 }, 
+        { id: 'night_owl', icon: '🦉', title: 'Oiseau de Nuit', desc: 'Cuisiner après 22h', cond: (s) => s.night >= 1 },
+        { id: 'morning', icon: '☀️', title: 'Lève-tôt', desc: 'Cuisiner avant 10h', cond: (s) => s.morning >= 1 },
+        { id: 'weekend', icon: '🎉', title: 'Dimanche', desc: 'Cuisiner le weekend', cond: (s) => s.weekend >= 5 },
+        { id: 'importer', icon: '🌍', title: 'Explorateur', desc: 'Importer 1 recette', cond: (s) => s.imported >= 1 },
+        { id: 'importer_50', icon: '🚢', title: 'Hacker', desc: 'Importer 50 recettes', cond: (s) => s.imported >= 50 },
+        { id: 'creator_1', icon: '✍️', title: 'Créateur', desc: '1 recette avec tag Création', cond: () => allRecipes.some(r => r.tags && r.tags.includes('Création')) },
+        { id: 'creator_10', icon: '🎨', title: 'Artiste', desc: '10 recettes avec tag Création', cond: () => allRecipes.filter(r => r.tags && r.tags.includes('Création')).length >= 10 },
+        { id: 'season', icon: '🍂', title: 'De Saison', desc: 'Cuisiner 5 fois de saison', cond: (s) => s.seasonal >= 5 },
+        { id: 'variety', icon: '🌈', title: 'Polyvalent', desc: 'Cuisiner 1 de chaque Mood', cond: (s) => s.healthy>0 && s.fast>0 && s.comfort>0 && s.patisserie>0 }
+    ];
+
+    BADGES.forEach(b => { 
+        const unlocked = b.cond(userStats); 
+        list.innerHTML += `
+        <div onclick="alert('${b.title} : ${b.desc}')" class="flex flex-col items-center justify-center p-3 rounded-2xl bg-gray-50 border ${unlocked ? 'border-purple-200 bg-purple-50' : 'border-gray-100'} ${unlocked ? '' : 'badge-locked'} cursor-pointer">
+            <div class="text-3xl mb-1">${b.icon}</div>
+            <div class="text-[10px] font-bold text-center leading-tight ${unlocked ? 'text-purple-700' : 'text-gray-400'}">${b.title}</div>
+        </div>`; 
+    });
+    
+    document.getElementById('badges-modal').classList.remove('hidden');
 }
