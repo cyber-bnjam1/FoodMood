@@ -68,8 +68,8 @@
     <div id="view-home" class="view-container active-view">
         <header class="flex justify-between items-center mt-8 mb-6">
             <div>
-                <p class="text-gray-400 text-xs font-bold uppercase tracking-wider">Bienvenue Chef</p>
-                <h1 class="text-3xl font-black text-gray-900">FoodMood</h1>
+                <p class="text-gray-400 text-xs font-bold uppercase tracking-wider">Bienvenue dans</p>
+                <h1 class="text-3xl font-black text-gray-900">FoodMood 🧑‍🍳</h1>
             </div>
             <div class="flex gap-2">
                 <button onclick="openBadges()" class="w-10 h-10 bg-yellow-100 rounded-full shadow-lg flex items-center justify-center text-yellow-600 active:scale-95 transition">
@@ -105,7 +105,7 @@
             </div>
         </div>
 
-        <h2 class="text-lg font-bold mb-4">Qu'est-ce qu'on mange ?</h2>
+        <h2 class="text-lg font-bold mb-4">Qu'est-ce qu'on prépare ?</h2>
         <div class="grid grid-cols-1 gap-4">
             <button onclick="navigate('fridge')" class="bg-blue-500 text-white p-6 rounded-3xl shadow-lg shadow-blue-200 active:scale-[0.98] transition flex items-center gap-4 relative overflow-hidden group text-left">
                 <div class="absolute right-0 top-0 h-full w-2 bg-blue-400"></div>
@@ -133,7 +133,7 @@
                 <div><h3 class="font-black text-lg text-gray-800">Desserts</h3><p class="text-xs text-gray-500 font-medium">La touche sucrée</p></div>
             </button>
             
-            <button onclick="findRecipeByCat('all')" class="mt-4 bg-gray-900 text-white rounded-2xl py-4 font-bold text-sm shadow-xl active:scale-[0.98] transition">🎲 Hasard Total</button>
+            <button onclick="findRecipeByCat('all')" class="mt-4 bg-gray-900 text-white rounded-2xl py-4 font-bold text-sm shadow-xl active:scale-[0.98] transition">🎲 Recette au hasard</button>
         </div>
     </div>
 
@@ -204,7 +204,7 @@
                     <div id="res-preview-ing" class="flex flex-wrap justify-center gap-2 max-h-32 overflow-y-auto"></div>
                 </div>
                 
-                <button onclick="openReadMode()" class="mt-4 bg-gray-100 text-gray-700 py-2 px-4 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-gray-200 transition"><i class="fas fa-book-open"></i> Mode Lecture</button>
+                <button onclick="openReadMode()" class="mt-4 bg-gray-100 text-gray-700 py-2 px-4 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-gray-200 transition"><i class="fas fa-book-open"></i> Coup d'oeil</button>
 
                 <div class="absolute top-4 left-4 flex gap-2">
                     <button id="btn-edit" class="text-gray-300 hover:text-blue-500" onclick="openEditMode()"><i class="fas fa-pen"></i></button>
@@ -213,8 +213,8 @@
             </div>
         </div>
         <div class="mt-4 flex flex-col gap-3">
-            <button onclick="startCooking()" class="w-full bg-brand text-white py-4 rounded-2xl font-black text-lg shadow-lg shadow-orange-200 active:scale-[0.98] transition">Cuisiner ça ! 👨‍🍳</button>
-            <button onclick="reroll()" class="w-full bg-white text-gray-600 py-4 rounded-2xl font-bold shadow active:scale-[0.98] transition">Autre chose... 🎲</button>
+            <button onclick="startCooking()" class="w-full bg-brand text-white py-4 rounded-2xl font-black text-lg shadow-lg shadow-orange-200 active:scale-[0.98] transition">En cuisine ! 👨‍🍳</button>
+            <button onclick="reroll()" class="w-full bg-white text-gray-600 py-4 rounded-2xl font-bold shadow active:scale-[0.98] transition">une autre recette... 🎲</button>
         </div>
     </div>
 
@@ -293,7 +293,7 @@
                 <div class="bg-white p-4 rounded-2xl shadow-sm"><label class="text-[10px] uppercase font-bold text-gray-400">Temps (min)</label><input type="number" id="add-time" class="w-full font-bold outline-none mt-1 bg-transparent"></div>
             </div>
             
-            <div class="bg-white p-4 rounded-2xl shadow-sm"><label class="text-[10px] uppercase font-bold text-gray-400">Cal (optionnel)</label><input type="number" id="add-cal" class="w-full font-bold outline-none mt-1 bg-transparent"></div>
+            <div class="bg-white p-4 rounded-2xl shadow-sm"><label class="text-[10px] uppercase font-bold text-gray-400">Calories (optionnel)</label><input type="number" id="add-cal" class="w-full font-bold outline-none mt-1 bg-transparent"></div>
             
             <div class="bg-white p-4 rounded-2xl shadow-sm"><label class="text-[10px] uppercase font-bold text-gray-400">Ingrédients (1/ligne)</label><textarea id="add-ing" class="w-full h-32 text-sm mt-2 outline-none resize-none bg-transparent"></textarea></div>
             <div class="bg-white p-4 rounded-2xl shadow-sm"><label class="text-[10px] uppercase font-bold text-gray-400">Étapes (1/ligne)</label><textarea id="add-steps" class="w-full h-32 text-sm mt-2 outline-none resize-none bg-transparent"></textarea></div>
