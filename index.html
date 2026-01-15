@@ -55,6 +55,11 @@
         .ing-card.checked span { text-decoration: line-through; color: #9CA3AF; }
         .step-circle { min-width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-weight: 900; }
         
+        /* PHOTO UPLOAD */
+        .photo-preview { width: 100%; height: 160px; object-fit: cover; border-radius: 16px; }
+        .recipe-hero-img { width: 100%; height: 250px; object-fit: cover; border-radius: 24px; margin-bottom: 16px; box-shadow: 0 10px 30px -10px rgba(0,0,0,0.1); }
+        .thumb-img { width: 48px; height: 48px; object-fit: cover; border-radius: 50%; }
+
         /* BOUTON CENTRAL */
         .nav-add-btn {
             background: linear-gradient(135deg, #F97316 0%, #FB923C 100%);
@@ -68,8 +73,8 @@
     <div id="view-home" class="view-container active-view">
         <header class="flex justify-between items-center mt-8 mb-6">
             <div>
-                <p class="text-gray-400 text-xs font-bold uppercase tracking-wider">Bienvenue dans</p>
-                <h1 class="text-3xl font-black text-gray-900">FoodMood 🧑‍🍳</h1>
+                <p class="text-gray-400 text-xs font-bold uppercase tracking-wider">Bienvenue Chef</p>
+                <h1 class="text-3xl font-black text-gray-900">FoodMood</h1>
             </div>
             <div class="flex gap-2">
                 <button onclick="openBadges()" class="w-10 h-10 bg-yellow-100 rounded-full shadow-lg flex items-center justify-center text-yellow-600 active:scale-95 transition">
@@ -105,7 +110,7 @@
             </div>
         </div>
 
-        <h2 class="text-lg font-bold mb-4">Qu'est-ce qu'on prépare ?</h2>
+        <h2 class="text-lg font-bold mb-4">Qu'est-ce qu'on mange ?</h2>
         <div class="grid grid-cols-1 gap-4">
             <button onclick="navigate('fridge')" class="bg-blue-500 text-white p-6 rounded-3xl shadow-lg shadow-blue-200 active:scale-[0.98] transition flex items-center gap-4 relative overflow-hidden group text-left">
                 <div class="absolute right-0 top-0 h-full w-2 bg-blue-400"></div>
@@ -133,7 +138,7 @@
                 <div><h3 class="font-black text-lg text-gray-800">Desserts</h3><p class="text-xs text-gray-500 font-medium">La touche sucrée</p></div>
             </button>
             
-            <button onclick="findRecipeByCat('all')" class="mt-4 bg-gray-900 text-white rounded-2xl py-4 font-bold text-sm shadow-xl active:scale-[0.98] transition">🎲 Recette au hasard</button>
+            <button onclick="findRecipeByCat('all')" class="mt-4 bg-gray-900 text-white rounded-2xl py-4 font-bold text-sm shadow-xl active:scale-[0.98] transition">🎲 Hasard Total</button>
         </div>
     </div>
 
@@ -184,7 +189,11 @@
         <div class="flex-1 flex flex-col justify-center">
             <div id="season-alert" class="hidden bg-orange-100 border border-orange-200 text-orange-800 text-xs font-bold p-3 rounded-xl mb-4 flex items-center gap-2"><i class="fas fa-leaf"></i> <span>Attention, ingrédients hors saison !</span></div>
             <div id="result-card" class="card p-6 flex flex-col items-center text-center relative overflow-hidden transition-all duration-300">
-                <span id="res-emoji" class="text-6xl mb-4 block drop-shadow-xl">🥘</span>
+                
+                <div id="res-header-container" class="w-full flex justify-center mb-4">
+                    <span id="res-emoji" class="text-6xl block drop-shadow-xl">🥘</span>
+                </div>
+
                 <h2 id="res-title" class="text-2xl font-black text-gray-900 leading-tight mb-2">...</h2>
                 <div id="res-tags-list" class="flex flex-wrap justify-center gap-1 mb-3"></div>
                 <div class="flex gap-3 justify-center mt-2 mb-4">
@@ -204,7 +213,7 @@
                     <div id="res-preview-ing" class="flex flex-wrap justify-center gap-2 max-h-32 overflow-y-auto"></div>
                 </div>
                 
-                <button onclick="openReadMode()" class="mt-4 bg-gray-100 text-gray-700 py-2 px-4 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-gray-200 transition"><i class="fas fa-book-open"></i> Coup d'oeil</button>
+                <button onclick="openReadMode()" class="mt-4 bg-gray-100 text-gray-700 py-2 px-4 rounded-xl font-bold text-sm flex items-center gap-2 hover:bg-gray-200 transition"><i class="fas fa-book-open"></i> Mode Lecture</button>
 
                 <div class="absolute top-4 left-4 flex gap-2">
                     <button id="btn-edit" class="text-gray-300 hover:text-blue-500" onclick="openEditMode()"><i class="fas fa-pen"></i></button>
@@ -213,8 +222,8 @@
             </div>
         </div>
         <div class="mt-4 flex flex-col gap-3">
-            <button onclick="startCooking()" class="w-full bg-brand text-white py-4 rounded-2xl font-black text-lg shadow-lg shadow-orange-200 active:scale-[0.98] transition">En cuisine ! 👨‍🍳</button>
-            <button onclick="reroll()" class="w-full bg-white text-gray-600 py-4 rounded-2xl font-bold shadow active:scale-[0.98] transition">une autre recette... 🎲</button>
+            <button onclick="startCooking()" class="w-full bg-brand text-white py-4 rounded-2xl font-black text-lg shadow-lg shadow-orange-200 active:scale-[0.98] transition">Cuisiner ça ! 👨‍🍳</button>
+            <button onclick="reroll()" class="w-full bg-white text-gray-600 py-4 rounded-2xl font-bold shadow active:scale-[0.98] transition">Autre chose... 🎲</button>
         </div>
     </div>
 
@@ -238,14 +247,14 @@
             <div class="w-10"></div>
         </div>
         
+        <div id="cook-hero-container"></div>
         <h1 id="cook-title" class="text-3xl font-black text-center text-gray-900 mb-8 leading-tight">Plat</h1>
 
         <div class="mb-8">
             <h3 class="font-bold text-lg mb-4 flex items-center gap-2 text-gray-800">
                 <i class="fas fa-shopping-basket text-brand"></i> Ingrédients
             </h3>
-            <div id="cook-ing-list" class="grid grid-cols-2 gap-3">
-                </div>
+            <div id="cook-ing-list" class="grid grid-cols-2 gap-3"></div>
         </div>
 
         <div class="border-t border-gray-200 my-6"></div>
@@ -254,8 +263,7 @@
             <h3 class="font-bold text-lg mb-6 flex items-center gap-2 text-gray-800">
                 <i class="fas fa-fire text-brand"></i> Préparation
             </h3>
-            <div id="cook-steps-list" class="space-y-0 pl-2">
-                </div>
+            <div id="cook-steps-list" class="space-y-0 pl-2"></div>
         </div>
         <div class="h-20"></div>
     </div>
@@ -268,6 +276,16 @@
         </div>
         <button onclick="toggleImportModal()" class="w-full bg-purple-100 text-purple-700 font-bold py-3 rounded-xl mb-4 flex items-center justify-center gap-2 active:scale-95 transition"><i class="fas fa-globe"></i> Importer depuis une URL</button>
         <form class="flex flex-col gap-4">
+            <div class="bg-white p-4 rounded-2xl shadow-sm text-center">
+                <label class="block cursor-pointer">
+                    <div id="add-photo-preview-container" class="bg-gray-100 border-2 border-dashed border-gray-300 rounded-xl p-6 flex flex-col items-center justify-center text-gray-400 hover:bg-gray-50 transition">
+                        <i class="fas fa-camera text-2xl mb-2"></i>
+                        <span class="text-xs font-bold">Ajouter une photo</span>
+                    </div>
+                    <input type="file" id="add-photo-input" accept="image/*" class="hidden" onchange="handleImageUpload(this)">
+                </label>
+            </div>
+
             <div class="bg-white p-4 rounded-2xl shadow-sm"><label class="text-[10px] uppercase font-bold text-gray-400">Nom du plat</label><input type="text" id="add-title" class="w-full text-xl font-bold outline-none mt-1 bg-transparent"></div>
             
             <div class="bg-white p-4 rounded-2xl shadow-sm">
@@ -289,11 +307,11 @@
             </div>
             
             <div class="grid grid-cols-2 gap-4">
-                <div class="bg-white p-4 rounded-2xl shadow-sm"><label class="text-[10px] uppercase font-bold text-gray-400">Emoji</label><select id="add-emoji" class="w-full text-2xl bg-transparent outline-none mt-1"><option value="🥘">🥘</option><option value="🍝">🍝</option><option value="🍔">🍔</option><option value="🍕">🍕</option><option value="🥗">🥗</option><option value="🍣">🍣</option><option value="🌮">🌮</option><option value="🍰">🍰</option><option value="🥦">🥦</option><option value="🍪">🍪</option><option value="🍦">🍦</option><option value="🧁">🧁</option><option value="🥜">🥜</option><option value="🍕">🍕</option><option value="🍱">🍱</option><option value="🥧">🥧</option><option value="🥟">🥟</option><option value="🍳">🍳</option><option value="🍖">🍖</option><option value="🥚">🥚</option><option value="🧀">🧀</option><option value="🥔">🥔</option><option value="🥪">🥪</option><option value="🍅">🍅</option></select></div>
+                <div class="bg-white p-4 rounded-2xl shadow-sm"><label class="text-[10px] uppercase font-bold text-gray-400">Emoji (si pas de photo)</label><select id="add-emoji" class="w-full text-2xl bg-transparent outline-none mt-1"><option value="🥘">🥘</option><option value="🍝">🍝</option><option value="🍔">🍔</option><option value="🍕">🍕</option><option value="🥗">🥗</option><option value="🍣">🍣</option><option value="🌮">🌮</option><option value="🍰">🍰</option><option value="🥦">🥦</option><option value="🍪">🍪</option><option value="🍦">🍦</option><option value="🧁">🧁</option><option value="🥜">🥜</option></select></div>
                 <div class="bg-white p-4 rounded-2xl shadow-sm"><label class="text-[10px] uppercase font-bold text-gray-400">Temps (min)</label><input type="number" id="add-time" class="w-full font-bold outline-none mt-1 bg-transparent"></div>
             </div>
             
-            <div class="bg-white p-4 rounded-2xl shadow-sm"><label class="text-[10px] uppercase font-bold text-gray-400">Calories (optionnel)</label><input type="number" id="add-cal" class="w-full font-bold outline-none mt-1 bg-transparent"></div>
+            <div class="bg-white p-4 rounded-2xl shadow-sm"><label class="text-[10px] uppercase font-bold text-gray-400">Cal (optionnel)</label><input type="number" id="add-cal" class="w-full font-bold outline-none mt-1 bg-transparent"></div>
             
             <div class="bg-white p-4 rounded-2xl shadow-sm"><label class="text-[10px] uppercase font-bold text-gray-400">Ingrédients (1/ligne)</label><textarea id="add-ing" class="w-full h-32 text-sm mt-2 outline-none resize-none bg-transparent"></textarea></div>
             <div class="bg-white p-4 rounded-2xl shadow-sm"><label class="text-[10px] uppercase font-bold text-gray-400">Étapes (1/ligne)</label><textarea id="add-steps" class="w-full h-32 text-sm mt-2 outline-none resize-none bg-transparent"></textarea></div>
