@@ -29,11 +29,10 @@ let currentPortion = 1;
 let activeCategoryFilter = 'all';
 let activeTagFilter = null;
 let wakeLock = null; 
-let currentImageBase64 = null;
+let currentImageBase64 = null; // Peut contenir une Base64 OU une URL
 
 // --- INIT APP ---
 document.addEventListener('DOMContentLoaded', () => { 
-    // Chargement immédiat des données locales pour éviter le "zéro"
     loadLocalData();
     navigate('home');
     
@@ -86,7 +85,7 @@ function openEditMode() {
     document.getElementById('add-ing').value = (currentRecipe.i || []).join('\n'); 
     document.getElementById('add-steps').value = (currentRecipe.s || []).join('\n');
     
-    // Preview image
+    // Preview image (URL ou Base64)
     const previewContainer = document.getElementById('add-photo-preview-container');
     if(currentImageBase64) {
         previewContainer.innerHTML = `<img src="${currentImageBase64}" class="photo-preview">`;
@@ -155,7 +154,7 @@ function saveRecipe() {
         i: ingText.split('\n').filter(l=>l.trim()!==""), 
         s: document.getElementById('add-steps').value.split('\n').filter(l=>l.trim()!==""),
         tags: selectedTags,
-        img: currentImageBase64 
+        img: currentImageBase64 // Sauvegarde URL ou Base64
     };
 
     if(editingRecipeId) {
@@ -163,7 +162,6 @@ function saveRecipe() {
         if(idx !== -1) allRecipes[idx] = recipeData;
     } else { 
         allRecipes.push(recipeData); 
-        // Pas d'incrément ici, c'est géré par updateStatsUI
     }
     
     saveData(); 
@@ -180,7 +178,8 @@ function renderResult(r) {
     
     const headerContainer = document.getElementById('res-header-container');
     if (r.img) {
-        headerContainer.innerHTML = `<img src="${r.img}" id="res-img" class="w-full h-48 object-cover rounded-3xl shadow-md mb-4">`;
+        // Fonctionne pour URL https://... et Base64 data:image...
+        headerContainer.innerHTML = `<img src="${r.img}" id="res-img" class="w-full h-48 object-cover rounded-3xl shadow-md mb-4" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">`;
     } else {
         headerContainer.innerHTML = `<span id="res-emoji" class="text-6xl block drop-shadow-xl">${r.em}</span>`;
     }
@@ -212,7 +211,7 @@ function openReadMode() {
 
     let headerHtml = '';
     if(currentRecipe.img) {
-        headerHtml = `<img src="${currentRecipe.img}" class="w-full h-64 object-cover mb-6">`;
+        headerHtml = `<img src="${currentRecipe.img}" class="w-full h-64 object-cover mb-6" onerror="this.style.display='none'">`;
     } else {
         headerHtml = `<div class="text-center text-6xl mb-4 pt-6">${currentRecipe.em}</div>`;
     }
@@ -245,7 +244,7 @@ function startCooking() {
     
     const heroContainer = document.getElementById('cook-hero-container');
     if(currentRecipe.img) {
-        heroContainer.innerHTML = `<img src="${currentRecipe.img}" class="recipe-hero-img">`;
+        heroContainer.innerHTML = `<img src="${currentRecipe.img}" class="recipe-hero-img" onerror="this.style.display='none'">`;
     } else {
         heroContainer.innerHTML = "";
     }
@@ -287,22 +286,21 @@ function renderCookbookList(list, targetId) {
         const isFav = favorites.includes(r.id) ? '<i class="fas fa-heart text-red-500 ml-1"></i>' : '';
         const cat = r.cat || 'main'; let catIcon = '🍗'; if(cat==='aperitif') catIcon='🥜'; if(cat==='starter') catIcon='🥗'; if(cat==='dessert') catIcon='🧁';
         
+        // Affichage conditionnel Image URL/Base64 ou Emoji
         let visual = `<div class="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center text-2xl flex-shrink-0 relative">${r.em}<span class="absolute -bottom-1 -right-1 text-[10px] bg-white rounded-full p-0.5 border border-gray-100 shadow-sm">${catIcon}</span></div>`;
         if(r.img) {
-            visual = `<div class="relative flex-shrink-0"><img src="${r.img}" class="thumb-img"><span class="absolute -bottom-1 -right-1 text-[10px] bg-white rounded-full p-0.5 border border-gray-100 shadow-sm">${catIcon}</span></div>`;
+            visual = `<div class="relative flex-shrink-0"><img src="${r.img}" class="thumb-img" onerror="this.style.display='none';this.parentElement.innerHTML='<div class=\\'w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center text-2xl flex-shrink-0 relative\\'>${r.em}</div>'"><span class="absolute -bottom-1 -right-1 text-[10px] bg-white rounded-full p-0.5 border border-gray-100 shadow-sm">${catIcon}</span></div>`;
         }
 
         container.innerHTML += `<div onclick="currentRecipe=allRecipes.find(x=>x.id==${r.id});renderResult(currentRecipe);navigate('result')" class="bg-white p-3 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-3 active:scale-[0.98] transition cursor-pointer">${visual}<div class="flex-1 min-w-0"><h4 class="font-bold text-gray-800 truncate">${r.t} ${isFav}</h4><div class="flex items-center gap-2 mt-1"><span class="text-[10px] text-gray-400 font-bold"><i class="far fa-clock"></i> ${r.time} min</span></div></div><div class="text-gray-300"><i class="fas fa-chevron-right"></i></div></div>`;
     });
 }
 
-// --- STATS & DATA SYNC (CORRIGÉ) ---
+// --- STATS & DATA SYNC ---
 
 function updateStatsUI() {
-    // On force le recalcul basé sur le tableau réel
     document.getElementById('total-recipes').textContent = allRecipes.length;
     
-    // Recalcul des créations
     const createdCount = allRecipes.filter(r => r.tags && r.tags.includes('Création')).length;
     document.getElementById('created-recipes-count').textContent = createdCount;
     
@@ -334,7 +332,6 @@ function saveData() {
 }
 
 function forceManualSync() {
-    // Vérification plus robuste de l'utilisateur
     const user = currentUser || firebase.auth().currentUser;
     if(!user) return alert("Tu n'es pas connecté !");
     
@@ -343,8 +340,6 @@ function forceManualSync() {
     btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> ..."; 
     btn.disabled = true; 
     
-    console.log("🔄 Lancement synchro manuelle...");
-
     db.ref('users/' + user.uid).once('value')
       .then((snapshot) => { 
           const data = snapshot.val(); 
@@ -374,7 +369,6 @@ function resetCookingStats() {
 }
 
 function loadDataFromObject(data) { 
-    console.log("📥 Chargement des données...", data);
     allRecipes = data.recipes || []; 
     favorites = data.fav || []; 
     
@@ -665,24 +659,47 @@ function fetchRecipeFromUrl() {
         const parser = new DOMParser(); 
         const doc = parser.parseFromString(h, "text/html"); 
         let rd = null; 
+        
+        // 1. Essayer JSON-LD
         const s = doc.querySelectorAll('script[type="application/ld+json"]'); 
         const f = (o) => { if (!o) return null; if (o['@type'] === 'Recipe') return o; if (Array.isArray(o['@graph'])) return o['@graph'].find(x => x['@type'] === 'Recipe'); if (Array.isArray(o)) return o.find(x => x['@type'] === 'Recipe'); return null; }; 
         for (let i of s) { try { const j = JSON.parse(i.innerText); const fd = f(j); if (fd) { rd = fd; break; } } catch(e) {} } 
+        
+        // 2. Fallback Image OG (OpenGraph) si pas dans JSON-LD
+        let imgUrl = null;
+        if (rd && rd.image) {
+            if(Array.isArray(rd.image)) imgUrl = rd.image[0];
+            else if(typeof rd.image === 'object' && rd.image.url) imgUrl = rd.image.url;
+            else if(typeof rd.image === 'string') imgUrl = rd.image;
+        }
+        if (!imgUrl) {
+            const ogImg = doc.querySelector('meta[property="og:image"]');
+            if(ogImg) imgUrl = ogImg.content;
+        }
+
         if (rd) { 
             document.getElementById('add-title').value = rd.name || ""; 
             if(Array.isArray(rd.recipeIngredient)) document.getElementById('add-ing').value = rd.recipeIngredient.join('\n'); 
             if(Array.isArray(rd.recipeInstructions)) { const st = rd.recipeInstructions.map(x => (x.text || x.name || x).replace(/&nbsp;/g, ' ').trim()).join('\n'); document.getElementById('add-steps').value = st; } else if (typeof rd.recipeInstructions === 'string') { document.getElementById('add-steps').value = rd.recipeInstructions; } 
+            
+            // Gestion Image URL importée
+            if(imgUrl) {
+                currentImageBase64 = imgUrl; // On stocke l'URL
+                document.getElementById('add-photo-preview-container').innerHTML = `<img src="${imgUrl}" class="photo-preview">`;
+            }
+
             let em = '🥘'; const tl = (rd.name || "").toLowerCase(); 
             if(tl.includes('gâteau') || tl.includes('tarte') || tl.includes('sucré')) em = '🍰'; 
             document.getElementById('add-emoji').value = em; 
-            userStats.imported++; toggleImportModal(); alert("OK !"); 
+            
+            userStats.imported++; toggleImportModal(); alert("Recette importée avec succès !"); 
         } else { 
             const h1 = doc.querySelector('h1'); 
-            if(h1) { document.getElementById('add-title').value = h1.innerText.trim(); toggleImportModal(); alert("Titre seul."); } 
-            else { throw new Error("Non reconnu"); } 
+            if(h1) { document.getElementById('add-title').value = h1.innerText.trim(); toggleImportModal(); alert("Import partiel (Titre uniquement)."); } 
+            else { throw new Error("Format non reconnu"); } 
         } 
     })
-    .catch(e => { console.error(e); alert("Erreur."); })
+    .catch(e => { console.error(e); alert("Erreur lors de l'import."); })
     .finally(() => { b.innerHTML = t; b.disabled = false; }); 
 }
 
