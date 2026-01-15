@@ -33,6 +33,7 @@ let currentImageBase64 = null;
 
 // --- INIT APP ---
 document.addEventListener('DOMContentLoaded', () => { 
+    // Chargement immédiat des données locales pour éviter le "zéro"
     loadLocalData();
     navigate('home');
     
@@ -162,7 +163,7 @@ function saveRecipe() {
         if(idx !== -1) allRecipes[idx] = recipeData;
     } else { 
         allRecipes.push(recipeData); 
-        userStats.total++;
+        // Pas d'incrément ici, c'est géré par updateStatsUI
     }
     
     saveData(); 
@@ -295,111 +296,177 @@ function renderCookbookList(list, targetId) {
     });
 }
 
-// --- HELPER FUNCTIONS ---
+// --- STATS & DATA SYNC (CORRIGÉ) ---
+
+function updateStatsUI() {
+    // On force le recalcul basé sur le tableau réel
+    document.getElementById('total-recipes').textContent = allRecipes.length;
+    
+    // Recalcul des créations
+    const createdCount = allRecipes.filter(r => r.tags && r.tags.includes('Création')).length;
+    document.getElementById('created-recipes-count').textContent = createdCount;
+    
+    document.getElementById('fav-count').textContent = favorites.length;
+    document.getElementById('cooked-count').textContent = userStats.total;
+    
+    let badgesUnlocked = 0; 
+    const BADGES = getBadgesList(); 
+    BADGES.forEach(b => { if(b.cond(userStats)) badgesUnlocked++; });
+    document.getElementById('badge-count').textContent = badgesUnlocked;
+}
+
 function saveData() { 
-    const localData = { recipes: allRecipes, fav: favorites, tags: userTags, stats: userStats }; 
+    const localData = { 
+        recipes: allRecipes, 
+        fav: favorites, 
+        tags: userTags, 
+        stats: userStats 
+    }; 
+    
     localStorage.setItem('foodmood_backup', JSON.stringify(localData)); 
     updateStatsUI(); 
+    
     if(currentUser) { 
         db.ref('users/' + currentUser.uid).set(localData)
-          .then(() => console.log("✅ CLOUD OK"))
-          .catch((error) => console.error("❌ CLOUD ERR", error)); 
+          .then(() => console.log("✅ CLOUD : Sauvegarde réussie"))
+          .catch((error) => console.error("❌ CLOUD ERREUR", error)); 
     } 
 }
 
-function forceManualSync() { 
-    if(!currentUser) return alert("Connecte-toi !"); 
+function forceManualSync() {
+    // Vérification plus robuste de l'utilisateur
+    const user = currentUser || firebase.auth().currentUser;
+    if(!user) return alert("Tu n'es pas connecté !");
+    
     const btn = document.querySelector('button[onclick="forceManualSync()"]'); 
-    const txt = btn.innerHTML; 
-    btn.innerHTML = "..."; 
+    const originalText = btn.innerHTML; 
+    btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> ..."; 
     btn.disabled = true; 
-    db.ref('users/' + currentUser.uid).once('value')
-      .then((s) => { 
-          const d = s.val(); 
-          if(d) { loadDataFromObject(d); alert("OK !"); } else { alert("Vide."); } 
+    
+    console.log("🔄 Lancement synchro manuelle...");
+
+    db.ref('users/' + user.uid).once('value')
+      .then((snapshot) => { 
+          const data = snapshot.val(); 
+          if(data) { 
+              loadDataFromObject(data); 
+              alert("✅ Données récupérées du Cloud !"); 
+          } else { 
+              alert("⚠️ Aucune donnée trouvée sur le Cloud."); 
+          } 
       })
-      .catch(e => alert(e.message))
-      .finally(() => { btn.innerHTML = txt; btn.disabled = false; }); 
+      .catch(e => {
+          console.error(e);
+          alert("Erreur Synchro : " + e.message);
+      })
+      .finally(() => { 
+          btn.innerHTML = originalText; 
+          btn.disabled = false; 
+      }); 
 }
 
 function resetCookingStats() { 
-    if(confirm("Reset ?")) { 
+    if(confirm("Remettre le compteur 'Cuisinés' à zéro ?")) { 
         userStats.total = 0; 
         saveData(); 
-        alert("Reset !"); 
+        alert("Compteur réinitialisé !"); 
     } 
 }
 
-function loadDataFromObject(d) { 
-    allRecipes = d.recipes || []; 
-    favorites = d.fav || []; 
-    if(d.tags && Array.isArray(d.tags)) { 
-        userTags = d.tags; 
+function loadDataFromObject(data) { 
+    console.log("📥 Chargement des données...", data);
+    allRecipes = data.recipes || []; 
+    favorites = data.fav || []; 
+    
+    if(data.tags && Array.isArray(data.tags)) { 
+        userTags = data.tags; 
         if(!userTags.includes("Création")) userTags.push("Création"); 
     } else { 
         userTags = ["Végétarien", "Sans Gluten", "Épicé", "Création"]; 
     } 
-    userStats = d.stats || userStats; 
-    localStorage.setItem('foodmood_backup', JSON.stringify(d)); 
+    
+    userStats = data.stats || userStats; 
+    
+    localStorage.setItem('foodmood_backup', JSON.stringify(data)); 
     updateStatsUI(); 
 }
 
 function loadLocalData() { 
-    const b = localStorage.getItem('foodmood_backup'); 
-    if(b) { try { loadDataFromObject(JSON.parse(b)); } catch(e) {} } 
+    const backup = localStorage.getItem('foodmood_backup'); 
+    if(backup) { 
+        try { 
+            loadDataFromObject(JSON.parse(backup)); 
+        } catch(e) {
+            console.error("Erreur lecture backup local", e);
+        } 
+    } 
 }
 
 function initDataListener() { 
     if (!currentUser) return; 
-    db.ref('users/' + currentUser.uid).on('value', (s) => { 
-        const d = s.val(); 
-        if(d) loadDataFromObject(d); 
+    const userRef = db.ref('users/' + currentUser.uid);
+    userRef.on('value', (snapshot) => { 
+        const data = snapshot.val(); 
+        if(data) {
+            loadDataFromObject(data); 
+        }
     }); 
 }
 
+// --- AUTH ---
 function loginWithGoogle() { 
     auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
         .then(() => auth.signInWithPopup(provider))
-        .then(() => { alert("Connecté !"); toggleSettings(); })
-        .catch((e) => alert(e.message)); 
+        .then(() => { alert("Connexion réussie !"); toggleSettings(); })
+        .catch((e) => alert("Erreur Auth: " + e.message)); 
 }
 
-function logout() { auth.signOut().then(() => { alert("Déconnecté."); location.reload(); }); }
+function logout() { 
+    auth.signOut().then(() => { 
+        alert("Déconnecté."); 
+        location.reload(); 
+    }); 
+}
 
 function updateAuthUI() { 
-    const i = document.getElementById('auth-indicator'), o = document.getElementById('auth-ui-logged-out'), l = document.getElementById('auth-ui-logged-in'); 
+    const indicator = document.getElementById('auth-indicator');
+    const loggedOutDiv = document.getElementById('auth-ui-logged-out');
+    const loggedInDiv = document.getElementById('auth-ui-logged-in');
+    
     if (currentUser) { 
-        i.classList.remove('bg-red-500'); i.classList.add('bg-green-500'); 
-        o.classList.add('hidden'); l.classList.remove('hidden'); 
+        indicator.classList.remove('bg-red-500'); indicator.classList.add('bg-green-500'); 
+        loggedOutDiv.classList.add('hidden'); loggedInDiv.classList.remove('hidden'); 
         document.getElementById('user-email').textContent = currentUser.email; 
     } else { 
-        i.classList.remove('bg-green-500'); i.classList.add('bg-red-500'); 
-        o.classList.remove('hidden'); l.classList.add('hidden'); 
+        indicator.classList.remove('bg-green-500'); indicator.classList.add('bg-red-500'); 
+        loggedOutDiv.classList.remove('hidden'); loggedInDiv.classList.add('hidden'); 
     } 
 }
 
+// --- UTILS ---
 function addNewTag() { 
-    const i = document.getElementById('new-tag-input'), v = i.value.trim(); 
-    if(v && !userTags.includes(v)) { 
-        userTags.push(v); saveData(); i.value = ""; 
+    const input = document.getElementById('new-tag-input');
+    const val = input.value.trim(); 
+    if(val && !userTags.includes(val)) { 
+        userTags.push(val); saveData(); input.value = ""; 
         renderSettingsTags(); renderTagsInForm(); 
     } 
 }
 
-function removeTag(t) { userTags = userTags.filter(x => x !== t); saveData(); renderSettingsTags(); }
+function removeTag(tag) { userTags = userTags.filter(x => x !== tag); saveData(); renderSettingsTags(); }
 
 function renderSettingsTags() { 
-    const d = document.getElementById('settings-tags-list'); d.innerHTML = ""; 
+    const div = document.getElementById('settings-tags-list'); div.innerHTML = ""; 
     userTags.forEach(t => { 
-        d.innerHTML += `<div class="bg-gray-100 px-3 py-1 rounded-full text-sm flex items-center gap-2">${t} <button onclick="removeTag('${t}')" class="text-red-500"><i class="fas fa-times"></i></button></div>`; 
+        div.innerHTML += `<div class="bg-gray-100 px-3 py-1 rounded-full text-sm flex items-center gap-2">${t} <button onclick="removeTag('${t}')" class="text-red-500"><i class="fas fa-times"></i></button></div>`; 
     }); 
 }
 
 function renderTagsInForm(sel = []) { 
-    const d = document.getElementById('add-tags-container'); d.innerHTML = ""; 
+    const div = document.getElementById('add-tags-container'); div.innerHTML = ""; 
     userTags.forEach(t => { 
-        const c = sel.includes(t); 
-        d.innerHTML += `<label class="cursor-pointer select-none border border-gray-200 text-gray-500 px-3 py-1 rounded-full text-xs font-bold transition flex items-center gap-1 has-[:checked]:border-brand has-[:checked]:bg-orange-50 has-[:checked]:text-brand"><input type="checkbox" value="${t}" class="hidden" ${c ? "checked" : ""}>${t}</label>`; 
+        const isChecked = sel.includes(t); 
+        div.innerHTML += `<label class="cursor-pointer select-none border border-gray-200 text-gray-500 px-3 py-1 rounded-full text-xs font-bold transition flex items-center gap-1 has-[:checked]:border-brand has-[:checked]:bg-orange-50 has-[:checked]:text-brand"><input type="checkbox" value="${t}" class="hidden" ${isChecked ? "checked" : ""}>${t}</label>`; 
     }); 
 }
 
@@ -417,17 +484,17 @@ function resetForm() {
 function findRecipeByCat(c) { activeCategoryTarget = c; rollDice(); navigate('result'); }
 
 function rollDice() { 
-    let f = allRecipes; 
-    if (activeCategoryTarget && activeCategoryTarget !== 'all') { f = allRecipes.filter(r => r.cat === activeCategoryTarget); } 
-    if(f.length === 0) { alert("Vide !"); return; } 
-    currentRecipe = f[Math.floor(Math.random() * f.length)]; 
+    let filtered = allRecipes; 
+    if (activeCategoryTarget && activeCategoryTarget !== 'all') { filtered = allRecipes.filter(r => r.cat === activeCategoryTarget); } 
+    if(filtered.length === 0) { alert("Aucune recette !"); return; } 
+    currentRecipe = filtered[Math.floor(Math.random() * filtered.length)]; 
     renderResult(currentRecipe); 
 }
 
 function reroll() { 
-    const c = document.getElementById('result-card'); 
-    c.classList.add('shake'); 
-    setTimeout(() => c.classList.remove('shake'), 500); 
+    const card = document.getElementById('result-card'); 
+    card.classList.add('shake'); 
+    setTimeout(() => card.classList.remove('shake'), 500); 
     rollDice(); 
 }
 
@@ -458,22 +525,22 @@ function getScaledIngredients(i, p) {
 
 function renderIngredientsList() { 
     if(!currentRecipe) return; 
-    const c = document.getElementById('res-preview-ing'); c.innerHTML = ""; 
+    const div = document.getElementById('res-preview-ing'); div.innerHTML = ""; 
     getScaledIngredients(currentRecipe.i, currentPortion).forEach(i => { 
-        c.innerHTML += `<span class="bg-gray-50 text-gray-600 text-[10px] px-2 py-1 rounded-md font-medium border border-gray-100">${i}</span>`; 
+        div.innerHTML += `<span class="bg-gray-50 text-gray-600 text-[10px] px-2 py-1 rounded-md font-medium border border-gray-100">${i}</span>`; 
     }); 
 }
 
 function updateFavIcon() { 
-    const b = document.getElementById('btn-fav'); 
-    if(favorites.includes(currentRecipe.id)) { b.classList.add('text-red-500'); b.classList.remove('text-gray-300'); } 
-    else { b.classList.remove('text-red-500'); b.classList.add('text-gray-300'); } 
+    const btn = document.getElementById('btn-fav'); 
+    if(favorites.includes(currentRecipe.id)) { btn.classList.add('text-red-500'); btn.classList.remove('text-gray-300'); } 
+    else { btn.classList.remove('text-red-500'); btn.classList.add('text-gray-300'); } 
 }
 
 function toggleFavorite() { 
     if(!currentRecipe) return; 
-    const i = favorites.indexOf(currentRecipe.id); 
-    if(i === -1) { favorites.push(currentRecipe.id); } else { favorites.splice(i, 1); } 
+    const idx = favorites.indexOf(currentRecipe.id); 
+    if(idx === -1) { favorites.push(currentRecipe.id); } else { favorites.splice(idx, 1); } 
     saveData(); updateFavIcon(); 
 }
 
@@ -487,8 +554,8 @@ function deleteCurrentRecipe() {
 
 function updateStatsOnClick() { 
     if(!currentRecipe) return; 
-    const c = currentRecipe.cat || 'main'; 
-    if(userStats[c] !== undefined) userStats[c]++; 
+    const cat = currentRecipe.cat || 'main'; 
+    if(userStats[cat] !== undefined) userStats[cat]++; 
     userStats.total++; 
     saveData(); 
 }
@@ -496,44 +563,47 @@ function updateStatsOnClick() {
 function setCategoryFilter(c) { activeCategoryFilter = c; updateFiltersUI(); filterCookbook(); }
 
 function updateFiltersUI() { 
-    document.querySelectorAll('.cat-filter').forEach(b => { 
-        if(b.dataset.cat === activeCategoryFilter) { 
-            b.classList.add('active', 'bg-gray-800', 'text-white', 'border-transparent'); 
-            b.classList.remove('bg-white', 'text-gray-500'); 
+    document.querySelectorAll('.cat-filter').forEach(btn => { 
+        if(btn.dataset.cat === activeCategoryFilter) { 
+            btn.classList.add('active', 'bg-gray-800', 'text-white', 'border-transparent'); 
+            btn.classList.remove('bg-white', 'text-gray-500'); 
         } else { 
-            b.classList.remove('active', 'bg-gray-800', 'text-white', 'border-transparent'); 
-            b.classList.add('bg-white', 'text-gray-500'); 
+            btn.classList.remove('active', 'bg-gray-800', 'text-white', 'border-transparent'); 
+            btn.classList.add('bg-white', 'text-gray-500'); 
         } 
     }); 
 }
 
 function filterCookbook() { 
-    const t = document.getElementById('search-input').value.toLowerCase(), f = document.getElementById('btn-filter-fav').classList.contains('bg-red-500'); 
-    const r = allRecipes.filter(x => { 
-        const mt = x.t.toLowerCase().includes(t), mf = f ? favorites.includes(x.id) : true, mc = activeCategoryFilter === 'all' ? true : (x.cat || 'main') === activeCategoryFilter; 
-        let mtag = true; 
-        if(activeTagFilter) { mtag = x.tags && x.tags.includes(activeTagFilter); } 
-        return mt && mf && mc && mtag; 
+    const term = document.getElementById('search-input').value.toLowerCase();
+    const onlyFav = document.getElementById('btn-filter-fav').classList.contains('bg-red-500'); 
+    const filtered = allRecipes.filter(x => { 
+        const matchText = x.t.toLowerCase().includes(term); 
+        const matchFav = onlyFav ? favorites.includes(x.id) : true; 
+        const matchCat = activeCategoryFilter === 'all' ? true : (x.cat || 'main') === activeCategoryFilter; 
+        let matchTag = true; 
+        if(activeTagFilter) { matchTag = x.tags && x.tags.includes(activeTagFilter); } 
+        return matchText && matchFav && matchCat && matchTag; 
     }); 
-    renderCookbookList(r, 'cookbook-list'); 
+    renderCookbookList(filtered, 'cookbook-list'); 
 }
 
 function renderCookbookTagsFilter() { 
-    const d = document.getElementById('cookbook-tags-filter'); d.innerHTML = ""; 
-    if(userTags.length === 0) { d.style.display = 'none'; return; } 
-    d.style.display = 'flex'; 
+    const div = document.getElementById('cookbook-tags-filter'); div.innerHTML = ""; 
+    if(userTags.length === 0) { div.style.display = 'none'; return; } 
+    div.style.display = 'flex'; 
     userTags.forEach(t => { 
-        const a = activeTagFilter === t; 
-        d.innerHTML += `<button onclick="toggleTagFilter('${t}')" class="tag-select flex-shrink-0 px-3 py-1 rounded-full text-[10px] font-bold border transition ${a ? 'active' : 'bg-white border-gray-200 text-gray-500'}">${t}</button>`; 
+        const isActive = activeTagFilter === t; 
+        div.innerHTML += `<button onclick="toggleTagFilter('${t}')" class="tag-select flex-shrink-0 px-3 py-1 rounded-full text-[10px] font-bold border transition ${isActive ? 'active' : 'bg-white border-gray-200 text-gray-500'}">${t}</button>`; 
     }); 
 }
 
 function toggleTagFilter(t) { activeTagFilter = activeTagFilter === t ? null : t; renderCookbookTagsFilter(); filterCookbook(); }
 
 function toggleFavFilter() { 
-    const b = document.getElementById('btn-filter-fav'); 
-    b.classList.toggle('bg-red-500'); b.classList.toggle('text-white'); 
-    b.classList.toggle('bg-white'); b.classList.toggle('text-gray-300'); 
+    const btn = document.getElementById('btn-filter-fav'); 
+    btn.classList.toggle('bg-red-500'); btn.classList.toggle('text-white'); 
+    btn.classList.toggle('bg-white'); btn.classList.toggle('text-gray-300'); 
     filterCookbook(); 
 }
 
